@@ -1,0 +1,264 @@
+function varargout = QCLGUITest1(varargin)
+% QCLGUITEST1 MATLAB code for QCLGUITest1.fig
+%      QCLGUITEST1, by itself, creates a new QCLGUITEST1 or raises the existing
+%      singleton*.
+%
+%      H = QCLGUITEST1 returns the handle to a new QCLGUITEST1 or the handle to
+%      the existing singleton*.
+%
+%      QCLGUITEST1('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in QCLGUITEST1.M with the given input arguments.
+%
+%      QCLGUITEST1('Property','Value',...) creates a new QCLGUITEST1 or raises the
+%      existing singleton*.  Starting from the left, property value pairs are
+%      applied to the GUI before QCLGUITest1_OpeningFcn gets called.  An
+%      unrecognized property name or invalid value makes property application
+%      stop.  All inputs are passed to QCLGUITest1_OpeningFcn via varargin.
+%
+%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
+%      instance to run (singleton)".
+%
+% See also: GUIDE, GUIDATA, GUIHANDLES
+
+% Edit the above text to modify the response to help QCLGUITest1
+
+% Last Modified by GUIDE v2.5 13-Dec-2018 13:47:46
+
+% Begin initialization code - DO NOT EDIT
+gui_Singleton = 1;
+gui_State = struct('gui_Name',       mfilename, ...
+    'gui_Singleton',  gui_Singleton, ...
+    'gui_OpeningFcn', @QCLGUITest1_OpeningFcn, ...
+    'gui_OutputFcn',  @QCLGUITest1_OutputFcn, ...
+    'gui_LayoutFcn',  [] , ...
+    'gui_Callback',   []);
+if nargin && ischar(varargin{1})
+    gui_State.gui_Callback = str2func(varargin{1});
+end
+
+if nargout
+    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+else
+    gui_mainfcn(gui_State, varargin{:});
+end
+% End initialization code - DO NOT EDIT
+
+
+% --- Executes just before QCLGUITest1 is made visible.
+function QCLGUITest1_OpeningFcn(hObject, eventdata, handles, varargin)
+% This function has no output args, see OutputFcn.
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% varargin   command line arguments to QCLGUITest1 (see VARARGIN)
+
+% global QCLLaser;
+% 
+% QCLLaser = [];
+% 
+% try
+%     QCLLaser = QCL;
+% catch
+%     warning('SGRLAB:SimulationMode','QCL not Initialized');
+% end
+% 
+% if isLaserConnected
+%     set(handles.connectedStatusText, 'BackgroundColor', 'green');
+%     if isKeySwitchSet
+%         set(handles.keySwitchStatusText, 'BackgroundColor', 'green');
+%         if isInterlockSet
+%             set(handles.interlockStatusText, 'BackgroundColor', 'green');
+%             set(handles.pbArmDisarmQCL, 'Enable', 'on');
+%         end
+%     end
+% end
+set(handles.QCLInfoTable,'Data',cell(3,3));
+set(handles.QCLInfoTable, 'RowName', {'QCL 1', 'QCL 2', 'QCL 3'});
+% 
+% Choose default command line output for QCLGUITest1
+handles.output = hObject;
+
+% Update handles structure
+guidata(hObject, handles);
+
+
+% UIWAIT makes QCLGUITest1 wait for user response (see UIRESUME)
+% uiwait(handles.figure1);
+
+
+% --- Outputs from this function are returned to the command line.
+function varargout = QCLGUITest1_OutputFcn(hObject, eventdata, handles)
+% varargout  cell array for returning output args (see VARARGOUT);
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get default command line output from handles structure
+varargout{1} = handles.output;
+
+
+
+% --- Executes on button press in pbEmissionOnOff.
+function pbEmissionOnOff_Callback(hObject, eventdata, handles)
+% hObject    handle to pbEmissionOnOff (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if ~isEmissionOn
+    set(handles.pbEmissionOnOff, 'String', 'Turning Emission On', 'BackgroundColor', 'yellow');
+    turnEmissionOn;
+    while ~isEmissionOn
+        pause(0.5);
+    end
+    if isEmissionOn
+        set(handles.pbEmissionOnOff, 'String', 'Turn Emission Off', 'BackgroundColor', 'green');
+        set(handles.emissionStatusText, 'BackgroundColor', 'green');
+    end
+else
+    turnEmissionOff;
+    if ~isEmissionOn
+        set(handles.pbEmissionOnOff, 'String', 'Turn Emission On', 'BackgroundColor', [0.94 0.94 0.94]);
+        set(handles.emissionStatusText, 'BackgroundColor', 'red');
+    end
+end
+
+
+
+function wavelengthTextEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to wavelengthTextEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of wavelengthTextEdit as text
+%        str2double(get(hObject,'String')) returns contents of wavelengthTextEdit as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function wavelengthTextEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to wavelengthTextEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in pumUnits.
+function pumUnits_Callback(hObject, eventdata, handles)
+% hObject    handle to pumUnits (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns pumUnits contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from pumUnits
+
+
+% --- Executes during object creation, after setting all properties.
+function pumUnits_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pumUnits (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pbTuneQCL.
+function pbTuneQCL_Callback(hObject, eventdata, handles)
+% hObject    handle to pbTuneQCL (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+wavelength = str2double(get(handles.wavelengthTextEdit, 'String'));
+unitsArray = get(handles.pumUnits, 'String');
+unitsInd = get(handles.pumUnits, 'Value');
+units = unitsArray{unitsInd};
+
+QCLNum = whichQCLNum(wavelength, units);
+
+if QCLNum == -1
+    error('Error: WAVELENGTH OUT OF RANGE');
+else
+    tuneQCL(wavelength, units, QCLNum);
+end
+
+while ~isQCLTuned
+    pause(0.5);
+end
+
+if isQCLTuned
+    set(handles.pbEmissionOnOff, 'Enable', 'on');
+end
+
+
+
+% --- Executes on button press in pbArmDisarmQCL.
+function pbArmDisarmQCL_Callback(hObject, eventdata, handles)
+% hObject    handle to pbArmDisarmQCL (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if ~isLaserArmed
+    set(handles.pbArmDisarmQCL, 'String', 'Arming Laser', 'BackgroundColor', 'yellow')
+    armLaser;
+    while ~isLaserArmed
+        pause(1.0);
+    end
+    set(handles.pbArmDisarmQCL, 'String', 'Disarm Laser', 'BackgroundColor', 'green');
+    while ~areTECsAtSetTemp
+        pause(1);
+    end
+    
+    if areTECsAtSetTemp
+        set(handles.tempStatusText, 'BackgroundColor', 'green');
+        set(handles.pbTuneQCL, 'Enable', 'on');
+    end
+else
+    if isEmissionOn
+        turnEmissionOff;
+        set(handles.pbEmissionOnOff, 'String', 'Turn Emission On', 'BackgroundColor', [0.94 0.94 0.94]);
+    end
+    disarmLaser;
+    set(handles.pbArmDisarmQCL, 'String', 'Arm Laser', 'BackgroundColor', [0.94 0.94 0.94]);
+    set(handles.pbEmissionOnOff, 'Enable', 'off');
+    set(handles.pbTuneQCL, 'Enable', 'off');
+end
+
+function disableArmDisarmButton
+set(handles.pbTuneQCL, 'Enable', 'off');
+set(handles.pbEmissionOnOff, 'Enable', 'off');
+set(handles.pbArmDisarmQCL, 'Enable', 'off');
+
+function updateQCLInfoTable()
+    numQCLs = getNumQCLs;
+    
+    QCL
+    
+    for ii = 1:numQCLs
+        bQcl = ii;
+        
+
+
+function updateLaserInfo()
+
+if isLaserConnected
+    set(handles.connectedStatusText, 'BackgroundColor', 'green');
+    if isKeySwitchSet
+        set(handles.keySwitchStatusText, 'BackgroundColor', 'green');
+        if isInterlockSet
+            set(handles.interlockStatusText, 'BackgroundColor', 'green');
+            set(handles.pbArmDisarmQCL, 'Enable', 'on');
+        end
+    end
+else
+    set(handles.connectedStatusText, 'BackgroundColor', 'red');
+    set(handles.keySwitchStatusText, 'BackgroundColor', 'red');
+    set(handles.interlockStatusText, 'BackgroundColor', 'red');
+    disableArmDisarmButton;
+end
