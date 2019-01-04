@@ -1,4 +1,4 @@
-classdef MIRcat_QCL < handle
+classdef MIRcat_QCL < handles
     
     properties (SetAccess = private, Hidden = true)
         libname = 'MIRcatSDK'; % Add rest of library path;
@@ -338,6 +338,8 @@ classdef MIRcat_QCL < handle
                 % If the operation fails raise an error.
                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+                elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
+                    error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
                 else
                     error('Error! Code: %d', ret);
                 end
@@ -377,7 +379,8 @@ classdef MIRcat_QCL < handle
         end
         
         function actualWavelength = get.actualWavelength(obj)
-            actualWavelengthPtr = libpointer('singlePtr', 0);
+            actualWavelength = 0;
+            actualWavelengthPtr = libpointer('singlePtr', actualWavelength);
             pbUnits = uint8(0);
             unitsPtr = libpointer('uint8Ptr', pbUnits);
             lightValid = false;
@@ -399,7 +402,9 @@ classdef MIRcat_QCL < handle
         end
         
         function tuneWavelength = get.tuneWavelength(obj)
-            tuneWavelengthPtr = libpointer('singlePtr', 0);
+%             MIRCAT_LIB uint32_t MIRcatSDK_GetTuneWW(float * pfTuneWW, uint8_t * pbUnits, uint8_t * pbPreferredQcl);
+            tuneWavelength = 0;
+            tuneWavelengthPtr = libpointer('singlePtr', tuneWavelength);
             pbUnits = uint8(0);
             unitsPtr = libpointer('uint8Ptr', pbUnits);
             prefQCL = uint8(obj.activeQCL);

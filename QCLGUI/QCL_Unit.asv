@@ -29,8 +29,10 @@ classdef QCL_Unit < handle
     
     methods
         function tuningRange_um = get.tuningRange_um(obj)
-            minRangePtr = libpointer('singlePtr', 0);
-            maxRangePtr = libpointer('singlePtr', 0);
+            minRange = 0;
+            minRangePtr = libpointer('singlePtr', minRange);
+            maxRange = 0;
+            maxRangePtr = libpointer('singlePtr', maxRange);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQclTuningRange', obj.QCLNum,...
                 minRangePtr, maxRangePtr, obj.QCLconsts.MIRcatSDK_UNITS_MICRONS);
             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
@@ -53,7 +55,8 @@ classdef QCL_Unit < handle
         end
         
         function pulseRate = get.pulseRate(obj)
-            pulseRatePtr = libpointer('singlePtr', 0);
+            pulseRate = 0;
+            pulseRatePtr = libpointer('singlePtr', pulseRate);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQCLPulseRate', obj.QCLNum, pulseRatePtr);
             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
                 % If the operation fails raise an error.
@@ -69,7 +72,9 @@ classdef QCL_Unit < handle
         end
         
         function pulseWidth = get.pulseWidth(obj)
-            pulseWidthPtr = libpointer('singlePtr', 0);
+            MIRCAT_LIB uint32_t MIRcatSDK_GetQCLPulseWidth(uint8_t bQcl, float * pfPulseWidthInNanoSec);
+            pulseWidth = 0;
+            pulseWidthPtr = libpointer('singlePtr', pulseWidth);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQCLPulseWidth', obj.QCLNum, pulseWidthPtr);
             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
                 % If the operation fails raise an error.
@@ -85,7 +90,8 @@ classdef QCL_Unit < handle
         end
         
         function currentInMilliAmps = get.current(obj)
-            currentInMilliAmpsPtr = libpointer('singlePtr', 0);
+            currentInMilliAmps = 0;
+            currentInMilliAmpsPtr = libpointer('singlePtr', currentInMilliAmps);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQCLCurrent', obj.QCLNum, currentInMilliAmpsPtr);
             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
                 % If the operation fails raise an error.
@@ -101,7 +107,8 @@ classdef QCL_Unit < handle
         end
         
         function actualTemp = get.actualTemp(obj)
-            QclTempPtr = libpointer('singlePtr', 0);
+            actualTemp = 0;
+            QclTempPtr = libpointer('singlePtr', actualTemp);
             
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQCLTemperature', obj.QCLNum, QclTempPtr);
             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
@@ -131,20 +138,12 @@ classdef QCL_Unit < handle
                     error('Error! Code: %d', ret);
                 end
             end
-%             #define MIRcatSDK_MODE_ERROR                                ((uint8_t)0)
-%             #define MIRcatSDK_MODE_PULSED                               ((uint8_t)1)
-%             #define MIRcatSDK_MODE_CW                                   ((uint8_t)2)
-%             #define MIRcatSDK_MODE_CW_MOD                               ((uint8_t)3)
-%             #define MIRcatSDK_MODE_CW_MR                                ((uint8_t)6)	//currently not supported in firmware
-%             #define MIRcatSDK_MODE_CW_MR_MOD                            ((uint8_t)7)	//currently not supported in firmware
-%             #define MIRcatSDK_MODE_CW_FLTR1                             ((uint8_t)8)
-%             #define MIRcatSDK_MODE_CW_FLTR2                             ((uint8_t)9)
-%             #define MIRcatSDK_MODE_CW_FLTR1_MOD                         ((uint8_t)10)
             mode = modePtr.value;
         end
         
         function setTemp = get.setTemp(obj)
-            QCLSetTempPtr = libpointer('singlePtr', 0);
+            setTemp = 0;
+            QCLSetTempPtr = libpointer('singlePtr', setTemp);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQclSetTemperature', obj.QCLNum, QCLSetTempPtr);
             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
                 % If the operation fails raise an error.
@@ -160,9 +159,12 @@ classdef QCL_Unit < handle
         end
         
         function tempRange = get.tempRange(obj)
-            nominalTempPtr = libpointer('singlePtr', 0);
-            minTempPtr = libpointer('singlePtr', 0);
-            maxTempPtr = libpointer('singlePtr', 0);
+            nominalTemp = 0;
+            nominalTempPtr = libpointer('singlePtr', nominalTemp);
+            minTemp = 0;
+            minTempPtr = libpointer('singlePtr', minTemp);
+            maxTemp = 0;
+            maxTempPtr = libpointer('singlePtr', maxTemp);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQCLTemperatureRange', ...
                 obj.QCLNum, nominalTempPtr, minTempPtr, maxTempPtr);
             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
@@ -200,7 +202,7 @@ classdef QCL_Unit < handle
         function tecParams = get.tecParams(obj)
             voltagePtr = libpointer('singlePtr', 0);
             currentPtr = libpointer('singlePtr', 0);
-            resistancePtr = libpointer('singlePtr', 0);
+            resistancePtr = libpointer('singlePtr', resistance);
             
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetAllTecParams', ...
                 obj.QCLNum, voltagePtr, currentPtr, resistancePtr);
@@ -222,7 +224,10 @@ classdef QCL_Unit < handle
         function convertedWavelength = convertWavelength(obj, currentWavelength, currentUnits, newUnits)
             
             currentWavelengthPtr = libpointer('singlePtr', currentWavelength);
-            convertedWavelengthPtr = libpointer('singlePtr', 0);
+            
+            convertedWavelength = 0;
+            convertedWavelengthPtr = libpointer('singlePtr', convertedWavelength);
+            
             switch currentUnits
                 case 'um'
                     curUnits = obj.MIRcatSDK_UNITS_MICRONS;
