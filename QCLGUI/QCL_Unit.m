@@ -19,7 +19,7 @@ classdef QCL_Unit < handle
         tecParams;
     end
     
-    methods (Access = protected)
+    methods %(Access = protected)
         
         function obj = QCL_Unit(QCLNum, QCLconsts)
             obj.QCLNum = QCLNum;
@@ -48,8 +48,8 @@ classdef QCL_Unit < handle
         
         function tuningRange_cm1 = get.tuningRange_cm1(obj)
             tuningRange_cm1 = [0 0];
-            tuningRange_cm1(1) = obj.convertWavelength(obj.tuningRange_um(2), 'um', 'cm1');
-            tuningRange_cm1(2) = obj.convertWavelength(obj.tuningRange_um(1), 'um', 'cm1');
+            tuningRange_cm1(1) = 10000./obj.tuningRange_um(2);
+            tuningRange_cm1(2) = 10000./obj.tuningRange_um(1);
         end
         
         function pulseRate = get.pulseRate(obj)
@@ -218,33 +218,33 @@ classdef QCL_Unit < handle
             
     end
     
-    methods (Access = private)
-        function convertedWavelength = convertWavelength(obj, currentWavelength, currentUnits, newUnits)
-            
-            currentWavelengthPtr = libpointer('singlePtr', currentWavelength);
-            convertedWavelengthPtr = libpointer('singlePtr', 0);
-            switch currentUnits
-                case 'um'
-                    curUnits = obj.MIRcatSDK_UNITS_MICRONS;
-                case 'cm1'
-                    curUnits = obj.MIRcatSDK_UNITS_CM1;
-                otherwise
-                    error('Please select wavenumbers (cm-1) or wavelength (um) for the current units');
-            end
-            
-            switch newUnits
-                case 'um'
-                    nUnits = obj.MIRcatSDK_UNITS_MICRONS;
-                case 'cm1'
-                    nUnits = obj.MIRcatSDK_UNITS_CM1;
-                otherwise
-                    error('Please select wavenumbers (cm-1) or wavelength (um) for the new units');
-            end
-            
-            calllib('MIRcatSDK', 'MIRcatSDK_ConvertWW', currentWavelengthPtr,...
-                curUnits, nUnits, convertedWavelengthPtr);
-            
-            convertedWavelength = convertedWavelengthPtr.value;
-        end
-    end
+%     methods (Access = private)
+%         function convertedWavelength = convertWavelength(obj, currentWavelength, currentUnits, newUnits)
+%             currentWavelengthPtr = libpointer('singlePtr', currentWavelength);
+%             convertedWavelength = 0;
+%             convertedWavelengthPtr = libpointer('singlePtr', convertedWavelength);
+%             switch currentUnits
+%                 case 'um'
+%                     curUnits = obj.QCLconsts.MIRcatSDK_UNITS_MICRONS;
+%                 case 'cm1'
+%                     curUnits = obj.QCLconsts.MIRcatSDK_UNITS_CM1;
+%                 otherwise
+%                     error('Please select wavenumbers (cm-1) or wavelength (um) for the current units');
+%             end
+%             
+%             switch newUnits
+%                 case 'um'
+%                     nUnits = obj.QCLconsts.MIRcatSDK_UNITS_MICRONS;
+%                 case 'cm1'
+%                     nUnits = obj.QCLconsts.MIRcatSDK_UNITS_CM1;
+%                 otherwise
+%                     error('Please select wavenumbers (cm-1) or wavelength (um) for the new units');
+%             end
+%             
+%             calllib('MIRcatSDK', 'MIRcatSDK_ConvertWW', currentWavelengthPtr,...
+%                 curUnits, nUnits, convertedWavelengthPtr);
+%             
+%             convertedWavelength = convertedWavelengthPtr.value;
+%         end
+%     end
 end

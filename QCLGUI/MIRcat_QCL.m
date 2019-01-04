@@ -5,7 +5,7 @@ classdef MIRcat_QCL < handle
     end
     
     properties (SetAccess = private)
-        QCLs;
+        QCLs = struct('QCL', QCL_Unit(0, 0));
         QCLconsts;
     end
     
@@ -32,7 +32,7 @@ classdef MIRcat_QCL < handle
     %make the constructor private
     methods (Access = private)
         
-        function obj = MIRcat_QCL()
+        function obj = MIRcat_QCL
             Initialize(obj);
         end
         
@@ -53,26 +53,27 @@ classdef MIRcat_QCL < handle
         function Initialize(obj)
             
             %% START HERE
-            try
+%             try
                 if ~libisloaded(obj.libname) % If the QCL library isn't loaded, load the library
                     obj.setupQCLEnv;
                 end
+                obj.QCLconsts = load(strcat(fileparts(mfilename('fullpath')), '\lib\MIRcatSDKconstants.mat'));
                 obj.connect;
                 for ii = 1:obj.numQCLs
-                    obj.QCLs(ii) = QCL_Unit(ii);
+                    obj.QCLs(ii) = struct('QCL', QCL_Unit(ii, obj.QCLconsts));
                 end
-                
-                
-            catch
-                warning('Error Initializing.  Enter simulation mode.');
-            end
-            
+%                 
+%             catch
+%                 warning('Error Initializing.  Enter simulation mode.');
+%             end
+%             
         end
         
         
     end
     
-    methods (Access = protected, Static)
+    %% Methods for Setup and Deletion
+    methods (Access = private)
         function setupQCLEnv(obj)
             
             dir = fileparts(mfilename('fullpath'));
@@ -89,7 +90,7 @@ classdef MIRcat_QCL < handle
                 warning('WARNING: %s', warnings);
             end
             
-            obj.QCLconsts = load(strcat(dir, '\lib\MIRcatSDKconstants.mat'));
+%             obj.QCLconsts = load(strcat(dir, '\lib\MIRcatSDKconstants.mat'));
             
         end
         
@@ -120,7 +121,10 @@ classdef MIRcat_QCL < handle
                 end
             end
         end
-        
+    end
+    
+    %% Methods That Change Laser State
+    methods
         function armLaser(obj)
             if ~obj.isArmed
                 ret = calllib('MIRcatSDK','MIRcatSDK_ArmLaser');
@@ -141,7 +145,7 @@ classdef MIRcat_QCL < handle
             end
         end
         
-        function disarm(obj)
+        function disarmLaser(obj)
             ret = calllib('MIRcatSDK','MIRcatSDK_DisarmLaser');
             
             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
@@ -158,8 +162,9 @@ classdef MIRcat_QCL < handle
                 end
             end
         end
-    end
+    end    
     
+    %% Get Properties Methods
     methods
         
         function APIVersion = get.APIVersion(obj)
@@ -433,10 +438,13 @@ classdef MIRcat_QCL < handle
             end
             isTuned = isTunedPtr.value;
         end
-
+    end
+    
+%% Methods for cleanup
+    methods
         function delete(obj)
             if obj.isArmed % If QCL is armed, disarm it
-                obj.disarm;
+                obj.disarmLaser;
             end
             
             if obj.isConnected
