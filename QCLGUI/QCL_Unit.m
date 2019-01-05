@@ -33,16 +33,17 @@ classdef QCL_Unit < handle
             maxRangePtr = libpointer('singlePtr', 0);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQclTuningRange', obj.QCLNum,...
                 minRangePtr, maxRangePtr, obj.QCLconsts.MIRcatSDK_UNITS_MICRONS);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
-                    error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
+%                     error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             tuningRange_um = [minRangePtr.value maxRangePtr.value];
         end
         
@@ -55,48 +56,51 @@ classdef QCL_Unit < handle
         function pulseRate = get.pulseRate(obj)
             pulseRatePtr = libpointer('singlePtr', 0);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQCLPulseRate', obj.QCLNum, pulseRatePtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
-                    error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
+%                     error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             pulseRate = pulseRatePtr.value;
         end
         
         function pulseWidth = get.pulseWidth(obj)
             pulseWidthPtr = libpointer('singlePtr', 0);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQCLPulseWidth', obj.QCLNum, pulseWidthPtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
-                    error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
+%                     error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             pulseWidth = pulseWidthPtr.value;
         end
         
         function currentInMilliAmps = get.current(obj)
             currentInMilliAmpsPtr = libpointer('singlePtr', 0);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQCLCurrent', obj.QCLNum, currentInMilliAmpsPtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
-                    error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end            
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
+%                     error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end            
             currentInMilliAmps = currentInMilliAmpsPtr.value;
         end
         
@@ -104,16 +108,17 @@ classdef QCL_Unit < handle
             QclTempPtr = libpointer('singlePtr', 0);
             
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQCLTemperature', obj.QCLNum, QclTempPtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
-                    error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
+%                     error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             actualTemp = QclTempPtr.value;
         end
         
@@ -121,16 +126,17 @@ classdef QCL_Unit < handle
             mode = uint8(0);
             modePtr = libpointer('uint8Ptr', mode);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQCLOperatingMode', obj.QCLNum, modePtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
-                    error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
+%                     error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
 %             #define MIRcatSDK_MODE_ERROR                                ((uint8_t)0)
 %             #define MIRcatSDK_MODE_PULSED                               ((uint8_t)1)
 %             #define MIRcatSDK_MODE_CW                                   ((uint8_t)2)
@@ -146,16 +152,17 @@ classdef QCL_Unit < handle
         function setTemp = get.setTemp(obj)
             QCLSetTempPtr = libpointer('singlePtr', 0);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQclSetTemperature', obj.QCLNum, QCLSetTempPtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
-                    error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
+%                     error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             setTemp = QCLSetTempPtr.value;
         end
         
@@ -165,16 +172,17 @@ classdef QCL_Unit < handle
             maxTempPtr = libpointer('singlePtr', 0);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQCLTemperatureRange', ...
                 obj.QCLNum, nominalTempPtr, minTempPtr, maxTempPtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
-                    error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_QCL_NUM_OUTOFRANGE == ret
+%                     error('Error! Code: %d. *[User Error]* QCL is out of range. Must be 1-4.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             tempRange = [minTempPtr.value nominalTempPtr.value maxTempPtr.value];
         end
         
@@ -182,14 +190,15 @@ classdef QCL_Unit < handle
             activeQCL = uint8(0);
             activeQCLPtr = libpointer('uint8Ptr', activeQCL);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetActiveQcl', activeQCLPtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             activeQCL = activeQCLPtr.value;
             active = false;
             if activeQCL == obj.QCLNum
@@ -204,14 +213,15 @@ classdef QCL_Unit < handle
             
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetAllTecParams', ...
                 obj.QCLNum, voltagePtr, currentPtr, resistancePtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             tecParams = struct('voltage', voltagePtr.value, 'current',...
                 currentPtr.value, 'resistance', resistancePtr.value);
         end           

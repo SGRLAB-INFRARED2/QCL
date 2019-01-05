@@ -99,27 +99,28 @@ classdef MIRcat_QCL < handle
                 % Call your function
                 ret = calllib('MIRcatSDK','MIRcatSDK_Initialize');
                 % Check to see if function call was Successful
-                if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                    if obj.QCLconsts.MIRcatSDK_RET_INITIALIZATION_FAILURE == ret
-                        error('Error! Code: %d. *[System Error]* If MIRcat controller Initialization failed.', ret);
-                    else
-                        error('Error! Code: %d', ret);
-                    end
-                end
+                checkError(ret);
+%                 if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                     if obj.QCLconsts.MIRcatSDK_RET_INITIALIZATION_FAILURE == ret
+%                         error('Error! Code: %d. *[System Error]* If MIRcat controller Initialization failed.', ret);
+%                     else
+%                         error('Error! Code: %d', ret);
+%                     end
+%                 end
             end
         end
         
         function disconnect(obj)
             ret = calllib('MIRcatSDK','MIRcatSDK_DeInitialize');
-            
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. *[User Error]* User tried to DeInitialize MIRcat object before controller initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. *[User Error]* User tried to DeInitialize MIRcat object before controller initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
         end
     end
     
@@ -129,38 +130,38 @@ classdef MIRcat_QCL < handle
             if ~obj.isArmed
                 ret = calllib('MIRcatSDK','MIRcatSDK_ArmLaser');
             end
-            
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_INTERLOCKS_KEYSWITCH_NOTSET == ret
-                    error('Error! Code: %d. *[User Error]* Interlock or key switch not set.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_ARMDISARM_FAILURE == ret
-                    error('Error! Code: %d. *[System Error]* System has failed to toggle laser arming.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_LASER_ALREADY_ARMED == ret
-                    error('Error! Code: %d. *[User Error]* User attempted to arm the laser when it has already been armed.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_INTERLOCKS_KEYSWITCH_NOTSET == ret
+%                     error('Error! Code: %d. *[User Error]* Interlock or key switch not set.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_ARMDISARM_FAILURE == ret
+%                     error('Error! Code: %d. *[System Error]* System has failed to toggle laser arming.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_LASER_ALREADY_ARMED == ret
+%                     error('Error! Code: %d. *[User Error]* User attempted to arm the laser when it has already been armed.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
         end
         
         function disarmLaser(obj)
             ret = calllib('MIRcatSDK','MIRcatSDK_DisarmLaser');
-            
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_INTERLOCKS_KEYSWITCH_NOTSET == ret
-                    error('Error! Code: %d. *[User Error]* Interlock or key switch not set.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_ARMDISARM_FAILURE == ret
-                    error('Error! Code: %d. *[System Error]* System has failed to toggle laser arming.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_LASER_ALREADY_ARMED == ret
-                    error('Error! Code: %d. *[User Error]* User attempted to disarm the laser when it has already been armed.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_INTERLOCKS_KEYSWITCH_NOTSET == ret
+%                     error('Error! Code: %d. *[User Error]* Interlock or key switch not set.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_ARMDISARM_FAILURE == ret
+%                     error('Error! Code: %d. *[System Error]* System has failed to toggle laser arming.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_LASER_ALREADY_ARMED == ret
+%                     error('Error! Code: %d. *[User Error]* User attempted to disarm the laser when it has already been armed.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
         end
     end    
     
@@ -178,12 +179,12 @@ classdef MIRcat_QCL < handle
             patchPtr = libpointer('uint16Ptr', patch);
             
             ret = calllib('MIRcatSDK','MIRcatSDK_GetAPIVersion', majorPtr, minorPtr, patchPtr);
-            
-            % Check to see if function call was Successful
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                error('Error! Code: %d', ret);
-            end
+            checkError(ret);
+%             % Check to see if function call was Successful
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 error('Error! Code: %d', ret);
+%             end
             
             % Convert the pointer values to the original variables.
             APIVersion = [majorPtr.value minorPtr.value patchPtr.value];
@@ -207,15 +208,15 @@ classdef MIRcat_QCL < handle
             numQCLs = uint8(0);
             numQCLsPtr = libpointer('uint8Ptr', numQCLs);
             ret = calllib('MIRcatSDK','MIRcatSDK_GetNumInstalledQcls', numQCLsPtr);
-            
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             
             numQCLs = numQCLsPtr.value;
         end
@@ -224,15 +225,15 @@ classdef MIRcat_QCL < handle
             isConnected = false;
             isConnectedPtr = libpointer('bool', isConnected);
             ret = calllib('MIRcatSDK','MIRcatSDK_IsConnectedToLaser', isConnectedPtr);
-            
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             
             isConnected = isConnectedPtr.value;
         end
@@ -242,15 +243,15 @@ classdef MIRcat_QCL < handle
             isInterlockSetPtr = libpointer('bool', isInterlockSet);
             
             ret = calllib('MIRcatSDK','MIRcatSDK_IsInterlockedStatusSet', isInterlockSetPtr);
-            
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             isInterlockSet = isInterlockSetPtr.value;
         end
         
@@ -258,15 +259,15 @@ classdef MIRcat_QCL < handle
             isKeySwitchSet = false;
             isKeySwitchSetPtr = libpointer('bool', isKeySwitchSet);
             ret = calllib('MIRcatSDK','MIRcatSDK_IsKeySwitchStatusSet', isKeySwitchSetPtr);
-            
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             isKeySwitchSet = isKeySwitchSetPtr.value;
         end
         
@@ -275,17 +276,17 @@ classdef MIRcat_QCL < handle
             isEmittingPtr = libpointer('bool', isEmitting);
             
             ret = calllib('MIRcatSDK','MIRcatSDK_IsEmissionOn', isEmittingPtr);
-            
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not initialized.', ret);
-                elseif obj.QCLconsts.MIRcatSDK_RET_COMM_ERROR == ret
-                    error('Error! Code: %d. MIRcat controller is unable to Read Info regarding the light from the system.', ret);
-                else
-                    error('Error! Code: %d', ret);                    
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not initialized.', ret);
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_COMM_ERROR == ret
+%                     error('Error! Code: %d. MIRcat controller is unable to Read Info regarding the light from the system.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);                    
+%                 end
+%             end
             isEmitting = isEmittingPtr.value;
         end
             
@@ -293,14 +294,15 @@ classdef MIRcat_QCL < handle
             isArmed = false;
             isArmedPtr = libpointer('bool', isArmed);
             ret = calllib('MIRcatSDK','MIRcatSDK_IsLaserArmed', isArmedPtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             isArmed = isArmedPtr.value;
         end
         
@@ -309,14 +311,15 @@ classdef MIRcat_QCL < handle
             isSystemErrorPtr = libpointer('bool', isSystemError);
             
             ret = calllib('MIRcatSDK','MIRcatSDK_IsSystemError', isSystemErrorPtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             isSystemError = isSystemErrorPtr.value;
         end
         
@@ -324,14 +327,15 @@ classdef MIRcat_QCL < handle
             areTECsAtTemp = false;
             areTECsAtTempPtr = libpointer('bool', areTECsAtTemp);
             ret = calllib('MIRcatSDK','MIRcatSDK_AreTECsAtSetTemperature', areTECsAtTempPtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             areTECsAtTemp = areTECsAtTempPtr.value;
         end
         
@@ -339,14 +343,15 @@ classdef MIRcat_QCL < handle
             systemErrorWord = uint16(0);
             systemErrorWordPtr = libpointer('uint16Ptr', systemErrorWord);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetSystemErrorWord', systemErrorWordPtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             systemErrorWord = systemErrorWordPtr.value;
         end
         
@@ -354,14 +359,15 @@ classdef MIRcat_QCL < handle
             units = uint8(0);
             unitsPtr = libpointer('uint8Ptr', units);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetWWDisplayUnits', unitsPtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             units = unitsPtr.value;
         end
         
@@ -370,14 +376,15 @@ classdef MIRcat_QCL < handle
             activeQCLPtr = libpointer('uint8Ptr', activeQCL);
             
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetActiveQcl', activeQCLPtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             activeQCL = activeQCLPtr.value;
         end
         
@@ -390,16 +397,16 @@ classdef MIRcat_QCL < handle
             
             % Check Actual Wavelength
             ret = calllib('MIRcatSDK','MIRcatSDK_GetActualWW', actualWavelengthPtr, unitsPtr, lightValidPtr);
-            
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret)
-                elseif obj.QCLconsts.MIRcatSDK_RET_COMM_ERROR == ret
-                    error('Error! Code: %d. MIRcat controller is unable to Read Info regarding the light from the system.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret)
+%                 elseif obj.QCLconsts.MIRcatSDK_RET_COMM_ERROR == ret
+%                     error('Error! Code: %d. MIRcat controller is unable to Read Info regarding the light from the system.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             actualWavelength = actualWavelengthPtr.value;
         end
         
@@ -411,15 +418,15 @@ classdef MIRcat_QCL < handle
             prefQCLPtr = libpointer('uint8Ptr', prefQCL);
             
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetTuneWW', tuneWavelengthPtr, unitsPtr, prefQCLPtr);
-            
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             
             tuneWavelength = tuneWavelengthPtr.value;
         end
@@ -428,14 +435,15 @@ classdef MIRcat_QCL < handle
             isTuned = false;
             isTunedPtr = libpointer('bool', isTuned);
             ret = calllib('MIRcatSDK','MIRcatSDK_IsTuned', isTunedPtr);
-            if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
-                % If the operation fails raise an error.
-                if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
-                    error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
-                else
-                    error('Error! Code: %d', ret);
-                end
-            end
+            checkError(ret);
+%             if obj.QCLconsts.MIRcatSDK_RET_SUCCESS ~= ret
+%                 % If the operation fails raise an error.
+%                 if obj.QCLconsts.MIRcatSDK_RET_NOT_INITIALIZED == ret
+%                     error('Error! Code: %d. MIRcat controller is not yet initialized.', ret);
+%                 else
+%                     error('Error! Code: %d', ret);
+%                 end
+%             end
             isTuned = isTunedPtr.value;
         end
     end
