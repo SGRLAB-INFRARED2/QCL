@@ -119,20 +119,6 @@ classdef MIRcat_QCL < handle
             checkMIRcatReturnError(ret);
         end
         
-        function tuneTo(wavelength, units, QCLnum)
-            switch units
-                case 'cm-1'
-                    ret = calllib('MIRcatSDK','MIRcatSDK_TuneToWW', ...
-                        single(wavelength), obj.QCLConsts.MIRcatSDK_UNITS_CM1, QCLnum);
-                case 'um'
-                    ret = calllib('MIRcatSDK','MIRcatSDK_TuneToWW', ...
-                        single(wavelength), MIRcatSDK_UNITS_MICRONS, QCLnum);
-                otherwise
-                    error('Error! *[User Error]* Units must be either ''cm-1'' or ''um''');
-            end
-            checkMIRcatReturnError(ret);
-        end
-        
         function disableManualTune
             ret = calllib('MIRcatSDK','MIRcatSDK_CancelManualTuneMode');
             checkMIRcatReturnError(ret);
@@ -145,6 +131,22 @@ classdef MIRcat_QCL < handle
         
         function turnEmissionOff
             ret = calllib('MIRcatSDK','MIRcatSDK_TurnEmissionOff');
+            checkMIRcatReturnError(ret);
+        end
+    end
+    
+    methods
+        function tuneTo(obj, wavelength, units, QCLnum)
+            switch units
+                case 'cm-1'
+                    ret = calllib('MIRcatSDK','MIRcatSDK_TuneToWW', ...
+                        single(wavelength), obj.QCLconsts.MIRcatSDK_UNITS_CM1, QCLnum);
+                case 'um'
+                    ret = calllib('MIRcatSDK','MIRcatSDK_TuneToWW', ...
+                        single(wavelength), obj.QCLconsts.MIRcatSDK_UNITS_MICRONS, QCLnum);
+                otherwise
+                    error('Error! *[User Error]* Units must be either ''cm-1'' or ''um''');
+            end
             checkMIRcatReturnError(ret);
         end
     end
