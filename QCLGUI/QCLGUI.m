@@ -202,7 +202,7 @@ else
     QCLLaser.tuneQCL(wavelength, units, QCLNum);
 end
 
-while ~isQCLTuned
+while ~QCLLaser.isTuned
     pause(0.5);
 end
 
@@ -227,11 +227,11 @@ if ~QCLLaser.isArmed
         pause(1.0);
     end
     set(handles.pbArmDisarmQCL, 'String', 'Disarm Laser', 'BackgroundColor', 'green');
-    while ~QCLLaser.areTECsAtSetTemp
+    while ~QCLLaser.areTECsAtTemp
         pause(1);
     end
     
-    if QCLLaser.areTECsAtSetTemp
+    if QCLLaser.areTECsAtTemp
         set(handles.tempStatusText, 'BackgroundColor', 'green');
         set(handles.pbTuneQCL, 'Enable', 'on');
     end
@@ -330,7 +330,7 @@ else
     disableArmDisarmButton(handles);
 end
 
-if QCLLaser.areTECsAtSetTemp
+if QCLLaser.areTECsAtTemp
     set(handles.tempStatusText, 'BackgroundColor', 'green');
     set(handles.pbTuneQCL, 'Enable', 'on');
 else
