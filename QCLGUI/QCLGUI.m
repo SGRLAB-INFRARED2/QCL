@@ -64,14 +64,22 @@ catch
     error('SGRLAB:SimulationMode','QCL not Initialized');
 end
 
+numQCLs = QCLLaser.numQCLs;
 
+set(handles.QCLInfoTable,'Data',cell(3, numQCLs));
+set(handles.QCLTuningRangeTable, 'Data', cell(numQCLs, 1));
 
-set(handles.QCLInfoTable,'Data',cell(3, QCLLaser.numQCLs));
-rowNames = cell(1, QCLLaser.numQCLs);
-for ii = 1:QCLLaser.numQCLs
+rowNames = cell(1, numQCLs);
+QCLTuningData = cell(numQCLs, 1);
+for ii = 1:numQCLs
     rowNames{ii} = sprintf('QCL %i', ii);
+    tuningRange = QCLLaser.QCLs{ii}.tuningRange_cm1;
+    QCLTuningData{1, ii} = sprintf('%0.1f to %0.1f cm^{-1}', tuningRange(1), tuningRange(2));
 end
 set(handles.QCLInfoTable, 'RowName', rowNames);
+set(handles.QCLTuningRangeTable, 'ColumnName', rowNames);
+set(handles.QCLTuningRangeTable, 'data', QCLTuningData);
+
 
 updateQCLInfo(handles);
 
