@@ -149,6 +149,50 @@ classdef MIRcat_QCL < handle
             end
             checkMIRcatReturnError(ret);
         end
+        
+        function [newWavelength, newUnits] = convertWavelength(obj,currentWavelength, currentUnits, newUnits)
+            % wavelength - wavelength you want to convert
+            % units - the units of the input wavelength
+            switch currentUnits
+                case 'um'
+                    switch newUnits
+                        case 'um'
+                            newWavelength = currentWavelength;
+                        case 'cm-1'
+                            newWavelength = 10000./currentWavelength;
+                        otherwise
+                            error('Error! *[User Error]* Units must be either ''cm-1'' or ''um''');
+                    end
+                case 'cm-1'
+                    switch newUnits
+                        case 'um'
+                            newWavelength = 10000./currentWavelength;
+                        case 'cm-1'
+                            newWavelength = currentWavelength;
+                        otherwise
+                            error('Error! *[User Error]* Units must be either ''cm-1'' or ''um''');
+                    end
+                otherwise
+                    error('Error! *[User Error]* Units must be either ''cm-1'' or ''um''');
+            end
+        end
+        
+        function QCLNum = whichQCL(obj, wavelength, units)
+            if strcmp(units, 'um')
+                wavelength = obj.convertWavelength(wavelength, units, 'cm-1');
+            end
+            
+            if wavelength >= 1380 && wavelength < 1750
+                QCLNum = 3;
+            elseif wavelength >= 1750 && wavelength < 1975
+                QCLNum = 2;
+            elseif wavelength >= 1975 && wavelength < 2300
+                QCLNum = 1;
+            else
+                QCLNum = -1;
+            end
+        end
+                
     end
     
     %% Get Properties Methods

@@ -22,7 +22,7 @@ function varargout = QCLGUI(varargin)
 
 % Edit the above text to modify the response to help QCLGUI
 
-% Last Modified by GUIDE v2.5 13-Dec-2018 19:18:18
+% Last Modified by GUIDE v2.5 13-Mar-2019 16:45:14
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -52,14 +52,11 @@ function QCLGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to QCLGUI (see VARARGIN)
 
-global QCLLaser timerObject cr1 cr2;
-
-% Initialize our custom cell renderer class object
-javaaddpath(strcat(fileparts(mfilename('fullpath')), '\ColoredFieldCellRenderer.zip'));
-cr1 = ColoredFieldCellRenderer(java.awt.Color.white);
-cr2 = ColoredFieldCellRenderer(java.awt.Color(240/255, 240/255, 240/255));
+global QCLLaser timerObject guiUnits;
 
 QCLLaser = [];
+
+guiUnits = 'cm-1';
 
 try
     QCLLaser = MIRcat_QCL.getInstance;
@@ -163,6 +160,26 @@ function pumUnits_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns pumUnits contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from pumUnits
+global guiUnits
+
+wavelength = str2double(get(handles.wavelengthTextEdit, 'String'));
+unitsArray = get(handles.pumUnits, 'String');
+unitsInd = get(handles.pumUnits, 'Value');
+newUnits = unitsArray{unitsInd};
+oldUnits = guiUnits;
+
+
+newWavelength = convertWavelength(wavelength, oldUnits, newUnits);
+if strcmp(newUnits, 'um')
+    set(handles.wavelengthTextEdit, 'String', sprintf('%0.2f', newWavelength));
+else
+    set(handles.wavelengthTextEdit, 'String', sprintf('%0.1f', newWavelength));
+end
+guiUnits = newUnits;
+
+ 
+
+
 
 
 % --- Executes during object creation, after setting all properties.
@@ -183,8 +200,9 @@ function pbTuneQCL_Callback(hObject, eventdata, handles)
 % hObject    handle to pbTuneQCL (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
 global QCLLaser
+
+set(hObject, 'String', 'Tuning', 'BackgroundColor', 'yellow');
 
 wavelength = str2double(get(handles.wavelengthTextEdit, 'String'));
 unitsArray = get(handles.pumUnits, 'String');
@@ -193,13 +211,16 @@ units = unitsArray{unitsInd};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %figure out best way to select QCL
-QCLNum = whichQCLNum(wavelength, units);
+QCLNum = QCLLaser.whichQCL(wavelength, units);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if QCLNum == -1
-    error('Error: WAVELENGTH OUT OF RANGE');
+    set(hObject, 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
+    set(handles.errorMessage1, 'String', 'ERROR: WAVELENGTH OUT OF RANGE');
+    error(sprintf('\n*******************************************\n*     ERROR: WAVELENGTH OUT OF RANGE      *\n*******************************************\n'));
+    
 else
-    QCLLaser.tuneQCL(wavelength, units, QCLNum);
+    QCLLaser.tuneTo(wavelength, units, QCLNum);
 end
 
 while ~QCLLaser.isTuned
@@ -207,6 +228,8 @@ while ~QCLLaser.isTuned
 end
 
 if QCLLaser.isTuned
+    set(handles.pbTuneQCL, 'String', 'Tuned', 'BackgroundColor', 'green');
+    set(handles.errorMessage1, 'String', '');
     set(handles.pbEmissionOnOff, 'Enable', 'on');
 end
 
@@ -243,7 +266,7 @@ else
     QCLLaser.disarmLaser;
     set(handles.pbArmDisarmQCL, 'String', 'Arm Laser', 'BackgroundColor', [0.94 0.94 0.94]);
     set(handles.pbEmissionOnOff, 'Enable', 'off');
-    set(handles.pbTuneQCL, 'Enable', 'off');
+    set(handles.pbTuneQCL, 'Enable', 'off', 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
 end
 
 function QCLInfoTable_CreateFcn(hObject, eventdata, handles)
@@ -251,57 +274,46 @@ function QCLInfoTable_CreateFcn(hObject, eventdata, handles)
 
 
 function disableArmDisarmButton(handles)
-set(handles.pbTuneQCL, 'Enable', 'off');
+set(handles.pbArmDisarmQCL, 'String', 'Arm Laser', 'BackgroundColor', [0.94 0.94 0.94]);
 set(handles.pbEmissionOnOff, 'Enable', 'off');
-set(handles.pbArmDisarmQCL, 'Enable', 'off');
+set(handles.pbTuneQCL, 'Enable', 'off', 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
 
 function updateQCLInfoTable(handles)
-    global QCLLaser cr1 cr2;
-    
-    jScroll = findjobj(handles.QCLInfoTable);
-    jTable = jScroll.getViewport.getView;
-    jTable.setAutoResizeMode(jTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
-    jTable.setForeground(java.awt.Color.black);
-    
-    numQCLs = QCLLaser.numQCLs;
-    
-    QCLInfoData = cell(numQCLs, 3);
-    
-    activeQCL = QCLLaser.activeQCL;
-    
-    for ii = 1:numQCLs
-        bQcl = ii;
-        
-        QCLInfoData{ii, 1} = sprintf('%2.3f', QCLLaser.QCLs{bQcl}.actualTemp); %getQCLTemp(bQcl));
-        QCLInfoData{ii,3} = num2str(QCLLaser.QCLs{bQcl}.tecParams.current); %getTECCurrent(bQcl));
-        
-        if ii == activeQCL
-            QCLInfoData{ii, 2} = sprintf('\tY');
-            cr1.setCellBgColor(ii-1, 1, java.awt.Color.green);  
-        else
-            QCLInfoData{ii, 2} = sprintf('\tN');
-            cr1.setCellBgColor(ii-1, 1, java.awt.Color.white); 
-        end
-    end
-    
-    jTable.setModel(javax.swing.table.DefaultTableModel(QCLInfoData,handles.QCLInfoTable.ColumnName));
-%     set(handles.QCLInfoTable,'ColumnFormat', []);
-    
-    jTable.setAutoResizeMode(jTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
-    jTable.setGridColor(java.awt.Color.gray);
-    
-    set(jScroll,'VerticalScrollBarPolicy',21);     
+global QCLLaser
+colorgen = @(color,text) ['<html><table border=0 width=65 bgcolor=',color,'><tr><td align=center><b>',text,'</b></td></tr> </table></html>'];
 
-    for colIdx = 1 : length(handles.QCLInfoTable.ColumnName)
-        jTable.getColumnModel.getColumn(colIdx-1).setCellRenderer(cr1);
-%         jTable.getColumnModel.getColumn(colIdx-1).setHeaderRenderer(cr2);
+numQCLs = QCLLaser.numQCLs;
+
+QCLInfoData = cell(numQCLs, 3);
+
+activeQCL = QCLLaser.activeQCL;
+
+for ii = 1:numQCLs
+    bQcl = ii;
+    
+    setTemp = QCLLaser.QCLs{bQcl}.setTemp;
+    tempRange = [QCLLaser.QCLs{bQcl}.tempRange(1) QCLLaser.QCLs{bQcl}.tempRange(3)];
+    actualTemp = QCLLaser.QCLs{bQcl}.actualTemp;
+    tecCurrent = QCLLaser.QCLs{bQcl}.tecParams.current*1000;
+    
+    if actualTemp > 0.975*setTemp && actualTemp < 1.025*setTemp
+        QCLInfoData{ii, 1} = colorgen('#00FF00', sprintf('%2.3f',actualTemp));
+    elseif actualTemp >= tempRange(1) && actualTemp <= tempRange(2)
+        QCLInfoData{ii, 1} = colorgen('#FFFF00', sprintf('%2.3f',actualTemp));
+    else
+        QCLInfoData{ii, 1} = colorgen('#FF0000', sprintf('%2.3f',actualTemp));
     end
     
-    jTable.getTableHeader().setOpaque(true);
-    jTable.getTableHeader().setBackground(java.awt.Color.gray);
+    if ii == activeQCL
+        QCLInfoData{ii, 2} = colorgen('#00FF00', 'Y');
+    else
+        QCLInfoData{ii, 2} = colorgen('#FFFFFF', 'N');
+    end
     
-%     jTable.getTableHeader().setBorder(javax.swing.BorderFactory.createMatteBorder(0,0,1,0,java.awt.Color.black));
-    
+    QCLInfoData{ii,3} = colorgen('FFFFFF', num2str(tecCurrent)); 
+end
+
+handles.QCLInfoTable.Data = QCLInfoData;
 
 
 function updateQCLInfo(handles)
@@ -381,4 +393,52 @@ delete(QCLLaser);
 
 % Hint: delete(hObject) closes the figure
 delete(hObject);
-clear java;
+
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over wavelengthTextEdit.
+function wavelengthTextEdit_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to wavelengthTextEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on key press with focus on wavelengthTextEdit and none of its controls.
+function wavelengthTextEdit_KeyPressFcn(hObject, eventdata, handles)
+% hObject    handle to wavelengthTextEdit (see GCBO)
+% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.UICONTROL)
+%	Key: name of the key that was pressed, in lower case
+%	Character: character interpretation of the key(s) that was pressed
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.pbTuneQCL, 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
+
+if strcmp(eventdata.Key, 'return') && strcmp(handles.pbTuneQCL.Enable, 'on')
+    uicontrol(handles.pbTuneQCL);
+    pbTuneQCL_Callback(handles.pbTuneQCL,[],handles);
+end
+
+function newWavelength = convertWavelength(currentWavelength, currentUnits, newUnits)
+    % wavelength - wavelength you want to convert
+    % units - the units of the input wavelength
+switch currentUnits
+    case 'um'
+        switch newUnits
+            case 'um'
+                newWavelength = currentWavelength;
+            case 'cm-1'
+                newWavelength = 10000./currentWavelength;
+            otherwise
+                error('Error! *[User Error]* Units must be either ''cm-1'' or ''um''');
+        end
+    case 'cm-1'
+        switch newUnits
+            case 'um'
+                newWavelength = 10000./currentWavelength;
+            case 'cm-1'
+                newWavelength = currentWavelength;
+            otherwise
+                error('Error! *[User Error]* Units must be either ''cm-1'' or ''um''');
+        end
+    otherwise
+        error('Error! *[User Error]* Units must be either ''cm-1'' or ''um''');
+end
