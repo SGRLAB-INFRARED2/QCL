@@ -22,7 +22,7 @@ function varargout = QCLGUI(varargin)
 
 % Edit the above text to modify the response to help QCLGUI
 
-% Last Modified by GUIDE v2.5 13-Mar-2019 16:45:14
+% Last Modified by GUIDE v2.5 18-Mar-2019 20:23:47
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -52,11 +52,13 @@ function QCLGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to QCLGUI (see VARARGIN)
 
-global QCLLaser timerObject guiUnits;
+global QCLLaser timerObject guiUnits prefQCL;
 
 QCLLaser = [];
 
 guiUnits = 'cm-1';
+
+prefQCL = 1;
 
 try
     QCLLaser = MIRcat_QCL.getInstance;
@@ -67,18 +69,33 @@ end
 numQCLs = QCLLaser.numQCLs;
 
 set(handles.QCLInfoTable,'Data',cell(3, numQCLs));
-set(handles.QCLTuningRangeTable, 'Data', cell(numQCLs, 1));
+% set(handles.QCLTuningRangeTable, 'Data', cell(numQCLs, 1));
 
 rowNames = cell(1, numQCLs);
-QCLTuningData = cell(numQCLs, 1);
+
+tuningRangePanelWidth = handles.tuningRangePanel.Position(3);
+textboxWidth = tuningRangePanelWidth./numQCLs;
+tuningRangePanelHeight = handles.tuningRangePanel.Position(4);
+textboxHeight = tuningRangePanelHeight./2;
+
 for ii = 1:numQCLs
     rowNames{ii} = sprintf('QCL %i', ii);
     tuningRange = QCLLaser.QCLs{ii}.tuningRange_cm1;
-    QCLTuningData{1, ii} = sprintf('%0.1f to %0.1f cm^{-1}', tuningRange(1), tuningRange(2));
+    handles.(['QCLRangeTB' num2str(ii)]) = uicontrol('Style','toggle','String',...
+        ['<html>', sprintf('%0.2f to %0.2f', tuningRange(1),tuningRange(2)),...
+        ' cm<sup>-1</sup></html>'],'FontWeight', 'bold', 'parent',handles.tuningRangePanel);
+    set(handles.(['QCLRangeTB' num2str(ii)]), 'Units', 'characters');
+    set(handles.(['QCLRangeTB' num2str(ii)]), 'Position', [(ii-1)*textboxWidth 0 textboxWidth textboxHeight]);
+    set(handles.(['QCLRangeTB' num2str(ii)]), 'FontSize', 10);
+    set(handles.(['QCLRangeTB' num2str(ii)]), 'Tag', num2str(ii));
+    
+    handles.(['QCLLabel' num2str(ii)]) = uicontrol('Style','edit','enable','inactive','String',...
+        sprintf('QCL %i', ii),'FontWeight', 'bold', 'parent',handles.tuningRangePanel);
+    set(handles.(['QCLLabel' num2str(ii)]), 'Units', handles.tuningRangePanel.Units);
+    set(handles.(['QCLLabel' num2str(ii)]), 'Position', [(ii-1)*textboxWidth textboxHeight textboxWidth textboxHeight]);
+    set(handles.(['QCLLabel' num2str(ii)]), 'FontSize', 10);
 end
 set(handles.QCLInfoTable, 'RowName', rowNames);
-set(handles.QCLTuningRangeTable, 'ColumnName', rowNames);
-set(handles.QCLTuningRangeTable, 'data', QCLTuningData);
 
 
 updateQCLInfo(handles);
@@ -450,3 +467,13 @@ switch currentUnits
     otherwise
         error('Error! *[User Error]* Units must be either ''cm-1'' or ''um''');
 end
+
+
+% --- Executes when selected object is changed in tuningRangePanel.
+function tuningRangePanel_SelectionChangedFcn(hObject, eventdata, handles)
+% hObject    handle to the selected object in tuningRangePanel 
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global prefQCL
+
+prefQCL = str2double(hObject.Tag);
