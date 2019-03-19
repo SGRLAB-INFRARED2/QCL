@@ -22,7 +22,7 @@ function varargout = QCLGUI(varargin)
 
 % Edit the above text to modify the response to help QCLGUI
 
-% Last Modified by GUIDE v2.5 18-Mar-2019 20:23:47
+% Last Modified by GUIDE v2.5 19-Mar-2019 16:26:06
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -52,14 +52,19 @@ function QCLGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to QCLGUI (see VARARGIN)
 
-global QCLLaser timerObject guiUnits prefQCL;
+global QCLLaser timerObject tuningUnits prefQCL numQCLs;
+
+guiLaserParamLabels = {'Active QCL:'; 'Mode:'; 'Pulse Rate (Hz):'; 'Pulse Width (ns):';...
+    'Current (mA):'; 'Wavenumber (cm^{-1}):'; 'Wavelength (\mum):'};
+
+guiLaserParams = {'activeQCL'; 'mode'; 'pulseRate'; 'pulseWidth';...
+    'currentQCL'; 'wavenumber'; 'wavelength'};
+
+tuningUnits = 'cm-1';
+
+prefQCL = -1;
 
 QCLLaser = [];
-
-guiUnits = 'cm-1';
-
-prefQCL = 1;
-
 try
     QCLLaser = MIRcat_QCL.getInstance;
 catch
@@ -77,26 +82,51 @@ tuningRangePanelWidth = handles.tuningRangePanel.Position(3);
 textboxWidth = tuningRangePanelWidth./numQCLs;
 tuningRangePanelHeight = handles.tuningRangePanel.Position(4);
 textboxHeight = tuningRangePanelHeight./2;
-
+jj = numQCLs;
 for ii = 1:numQCLs
     rowNames{ii} = sprintf('QCL %i', ii);
-    tuningRange = QCLLaser.QCLs{ii}.tuningRange_cm1;
-    handles.(['QCLRangeTB' num2str(ii)]) = uicontrol('Style','toggle','String',...
-        ['<html>', sprintf('%0.2f to %0.2f', tuningRange(1),tuningRange(2)),...
-        ' cm<sup>-1</sup></html>'],'FontWeight', 'bold', 'parent',handles.tuningRangePanel);
-    set(handles.(['QCLRangeTB' num2str(ii)]), 'Units', 'characters');
-    set(handles.(['QCLRangeTB' num2str(ii)]), 'Position', [(ii-1)*textboxWidth 0 textboxWidth textboxHeight]);
-    set(handles.(['QCLRangeTB' num2str(ii)]), 'FontSize', 10);
-    set(handles.(['QCLRangeTB' num2str(ii)]), 'Tag', num2str(ii));
+    tuningRange = QCLLaser.QCLs{jj}.tuningRange_cm1;
+    handles.(['pbQCLRange' num2str(jj)]) = uicontrol('Style','toggle','String',...
+        ['<html>', sprintf('%0.1f to %0.1f', tuningRange(1),tuningRange(2)),...
+        ' cm<sup>-1</sup></html>'],'FontWeight', 'bold', 'Tag', num2str(jj),...
+        'Units', handles.tuningRangePanel.Units, 'FontSize', 10,...
+        'parent', handles.tuningRangePanel,...
+        'Position', [(jj-1)*textboxWidth 0 textboxWidth textboxHeight],...
+        'BackgroundColor', 'white', 'Value', 1, 'Callback',...
+        @(hObject,eventdata)QCLGUI('pbWhichQCL_Callback',hObject,eventdata,guidata(hObject)));
     
-    handles.(['QCLLabel' num2str(ii)]) = uicontrol('Style','edit','enable','inactive','String',...
-        sprintf('QCL %i', ii),'FontWeight', 'bold', 'parent',handles.tuningRangePanel);
-    set(handles.(['QCLLabel' num2str(ii)]), 'Units', handles.tuningRangePanel.Units);
-    set(handles.(['QCLLabel' num2str(ii)]), 'Position', [(ii-1)*textboxWidth textboxHeight textboxWidth textboxHeight]);
-    set(handles.(['QCLLabel' num2str(ii)]), 'FontSize', 10);
+    handles.(['pbQCLLabel' num2str(jj)]) = uicontrol('Style','push', 'String',...
+        sprintf('QCL %i', jj),'FontWeight', 'bold', 'BackgroundColor', 'white',...
+        'Tag', num2str(jj), 'Units', handles.tuningRangePanel.Units, 'FontSize', 10,...
+        'parent',handles.tuningRangePanel,...
+        'Position', [(jj-1)*textboxWidth textboxHeight textboxWidth textboxHeight],...
+        'Callback', ...
+        @(hObject,eventdata)QCLGUI('pbWhichQCL_Callback',hObject,eventdata,guidata(hObject)));
+    
+    jj = jj - 1;
 end
-set(handles.QCLInfoTable, 'RowName', rowNames);
+clear ii jj
 
+panelHeight = handles.laserParamsPanel.Position(4);
+for ii = 1:length(guiLaserParamLabels)
+    handles.([guiLaserParams{ii} 'Label']) = uibutton(handles.laserParamsPanel, 'Style', 'text',...
+        'String', guiLaserParamLabels{ii}, 'FontSize', 11, 'Units', handles.laserParamsPanel.Units,...
+        'Position', [0 (panelHeight-(ii)*2) 28 1.5],...
+        'ForegroundColor', 'black', 'HorizontalAlignment', 'right',...
+        'Interpreter','tex');
+    
+    handles.([guiLaserParams{ii} 'Value']) = uicontrol(handles.laserParamsPanel, 'Style', 'edit',...
+        'FontSize', 10, 'Units', handles.laserParamsPanel.Units,...
+        'Position', [28 (panelHeight-(ii)*2)-0.1 10 1.5], 'Enable', 'inactive',...
+        'ForegroundColor', 'black');
+end
+
+set(handles.QCLInfoTable, 'ColumnName', {'<html>Temp (&#8451;)</html>'; 'Active'; '<html>TEC I (mA)</html>'});
+set(handles.QCLInfoTable, 'RowName', rowNames);
+% set(handles.QCLLabel1, 'FontSize', 14, 'ForegroundColor', [10, 96, 7]./255);
+% set(handles.QCLRangeTB1, 'Value', 1);
+
+set(handles.pumUnits, 'String', {'<html>cm<sup>-1</sup></html>'; '<html>&mu;m</html>'});
 
 updateQCLInfo(handles);
 
@@ -185,22 +215,35 @@ function pumUnits_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns pumUnits contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from pumUnits
-global guiUnits
+global tuningUnits numQCLs QCLLaser
+
+unitsArray = {'cm-1', 'um'};
 
 wavelength = str2double(get(handles.wavelengthTextEdit, 'String'));
-unitsArray = get(handles.pumUnits, 'String');
 unitsInd = get(handles.pumUnits, 'Value');
 newUnits = unitsArray{unitsInd};
-oldUnits = guiUnits;
+oldUnits = tuningUnits;
 
 
 newWavelength = convertWavelength(wavelength, oldUnits, newUnits);
 if strcmp(newUnits, 'um')
     set(handles.wavelengthTextEdit, 'String', sprintf('%0.2f', newWavelength));
+    for ii = 1:numQCLs
+        tuningRange = QCLLaser.QCLs{ii}.tuningRange_um;
+        set(handles.(['QCLRangeTB' num2str(ii)]), 'String', ...
+            ['<html>', sprintf('%0.2f to %0.2f', tuningRange(1),tuningRange(2)),...
+            ' &mu;m</sup></html>']);
+    end
 else
     set(handles.wavelengthTextEdit, 'String', sprintf('%0.1f', newWavelength));
+    for ii = 1:numQCLs
+        tuningRange = QCLLaser.QCLs{ii}.tuningRange_cm1;
+        set(handles.(['QCLRangeTB' num2str(ii)]), 'String', ...
+            ['<html>', sprintf('%0.1f to %0.1f', tuningRange(1),tuningRange(2)),...
+            ' &mu;m</sup></html>']);
+    end
 end
-guiUnits = newUnits;
+tuningUnits = newUnits;
 
  
 
@@ -225,27 +268,44 @@ function pbTuneQCL_Callback(hObject, eventdata, handles)
 % hObject    handle to pbTuneQCL (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global QCLLaser
+global QCLLaser prefQCL tuningUnits
 
 set(hObject, 'String', 'Tuning', 'BackgroundColor', 'yellow');
 
 wavelength = str2double(get(handles.wavelengthTextEdit, 'String'));
-unitsArray = get(handles.pumUnits, 'String');
-unitsInd = get(handles.pumUnits, 'Value');
-units = unitsArray{unitsInd};
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%figure out best way to select QCL
-QCLNum = QCLLaser.whichQCL(wavelength, units);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-if QCLNum == -1
-    set(hObject, 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
-    set(handles.errorMessage1, 'String', 'ERROR: WAVELENGTH OUT OF RANGE');
-    error(sprintf('\n*******************************************\n*     ERROR: WAVELENGTH OUT OF RANGE      *\n*******************************************\n'));
+if prefQCL ~= -1
+    if strcmp(tuningUnits, 'um')
+        tuningRange = QCLLaser.QCLs{prefQCL}.tuningRange_um;
+    else
+        tuningRange = QCLLaser.QCLs{prefQCL}.tuningRange_cm1;
+    end
     
+    if wavelength >= tuningRange(1) && wavelength <= tuningRange(2)
+        QCLLaser.tuneTo(wavelength, tuningUnits, prefQCL);
+    else
+        QCLNum = QCLLaser.whichQCL(wavelength, tuningUnits);
+        if QCLNum == -1
+            set(hObject, 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
+            set(handles.errorMessage1, 'String', 'ERROR: WAVELENGTH OUT OF RANGE');
+            error(sprintf(['\n*******************************************\n',...
+                '*     ERROR: WAVELENGTH OUT OF RANGE      *',...
+                '\n*******************************************\n']));
+        else
+            QCLLaser.tuneTo(wavelength, tuningUnits, QCLNum);
+        end
+    end
 else
-    QCLLaser.tuneTo(wavelength, units, QCLNum);
+    QCLNum = QCLLaser.whichQCL(wavelength, tuningUnits);
+    if QCLNum == -1
+        set(hObject, 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
+        set(handles.errorMessage1, 'String', 'ERROR: WAVELENGTH OUT OF RANGE');
+        error(sprintf(['\n*******************************************\n',...
+            '*     ERROR: WAVELENGTH OUT OF RANGE      *',...
+            '\n*******************************************\n']));
+    else
+        QCLLaser.tuneTo(wavelength, tuningUnits, QCLNum);
+    end
 end
 
 while ~QCLLaser.isTuned
@@ -342,7 +402,7 @@ handles.QCLInfoTable.Data = QCLInfoData;
 
 
 function updateQCLInfo(handles)
-global QCLLaser
+global QCLLaser numQCLs
 
 if QCLLaser.isConnected
     set(handles.connectedStatusText, 'BackgroundColor', 'green');
@@ -373,6 +433,14 @@ if QCLLaser.areTECsAtTemp
 else
     set(handles.tempStatusText, 'BackgroundColor', 'red');
     set(handles.pbTuneQCL, 'Enable', 'off');
+end
+
+for ii = 1:numQCLs
+    if ii == QCLLaser.activeQCL
+        set(handles.(['pbQCLRange' num2str(ii)]), 'BackgroundColor', 'green');
+    else
+        set(handles.(['pbQCLRange' num2str(ii)]), 'BackgroundColor', 'white');
+    end
 end
     
 
@@ -469,11 +537,29 @@ switch currentUnits
 end
 
 
-% --- Executes when selected object is changed in tuningRangePanel.
-function tuningRangePanel_SelectionChangedFcn(hObject, eventdata, handles)
-% hObject    handle to the selected object in tuningRangePanel 
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-global prefQCL
+% --- Executes when button is pressed to select QCL.
+function pbWhichQCL_Callback(hObject, eventdata, handles)
+% global NumQCLs
 
-prefQCL = str2double(hObject.Tag);
+global prefQCL numQCLs
+for ii = 1:numQCLs
+    set(handles.(['pbQCLRange' num2str(ii)]), 'Value', 1);
+end
+
+if prefQCL == str2double(hObject.Tag)
+    prefQCL = -1;
+    set(handles.(['pbQCLLabel' hObject.Tag]), 'FontSize', 10,...
+        'ForegroundColor', 'black');
+else
+    prefQCL = str2double(hObject.Tag);
+    for ii = 1:numQCLs
+        if ii == prefQCL
+            set(handles.(['pbQCLLabel' num2str(ii)]) , 'FontSize', 14,...
+                'ForegroundColor', [10, 96, 7]./255);
+            
+        else
+            set(handles.(['pbQCLLabel' num2str(ii)]) , 'FontSize', 10,...
+                'ForegroundColor', 'black');
+        end
+    end
+end
