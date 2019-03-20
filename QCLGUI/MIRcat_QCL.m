@@ -22,7 +22,8 @@ classdef MIRcat_QCL < handle
         isSystemError;
         areTECsAtTemp;
         systemErrorWord;
-        units;
+        unitsIndex;
+        unitsString;
         activeQCL;
         actualWavelength;
         tuneWavelength;
@@ -150,9 +151,12 @@ classdef MIRcat_QCL < handle
             checkMIRcatReturnError(ret);
         end
         
+        function cancelManualTune(obj)
+            ret = calllib('MIRcatSDK', 'MIRcatSDK_CancelManualTuneMode');
+            checkMIRcatReturnError(ret);
+        end
+        
         function [newWavelength, newUnits] = convertWavelength(obj,currentWavelength, currentUnits, newUnits)
-            % wavelength - wavelength you want to convert
-            % units - the units of the input wavelength
             switch currentUnits
                 case 'um'
                     switch newUnits
@@ -182,11 +186,11 @@ classdef MIRcat_QCL < handle
                 wavelength = obj.convertWavelength(wavelength, units, 'cm-1');
             end
             
-            if wavelength >= 1380 && wavelength < 1750
+            if wavelength >= obj.QCLs{3}.tuningRange_cm1(1) && wavelength < 1750
                 QCLNum = 3;
             elseif wavelength >= 1750 && wavelength < 1975
                 QCLNum = 2;
-            elseif wavelength >= 1975 && wavelength < 2300
+            elseif wavelength >= 1975 && wavelength < obj.QCLs{1}.tuningRange_cm1(2)
                 QCLNum = 1;
             else
                 QCLNum = -1;
@@ -215,17 +219,13 @@ classdef MIRcat_QCL < handle
         end
         
         function modelNumber = get.modelNumber(obj)
-            %             MIRCAT_LIB uint32_t MIRcatSDK_GetModelNumber(char * pszModelNumber, uint8_t bSize);
-            %% TO DO
-            % Implement this method
-            modelNumber = 0;
+            [ret, modelNumber] = calllib('MIRcatSDK', 'MIRcatSDK_GetModelNumber', blanks(100), 100);
+            checkMIRcatReturnError(ret);
         end
         
         function serialNumber = get.serialNumber(obj)
-            %             MIRCAT_LIB uint32_t MIRcatSDK_GetSerialNumber(char * pszSerialNumber, uint8_t bSize);
-            %% TO DO
-            % Implement this method
-            serialNumber = 0;
+            [ret, serialNumber] = calllib('MIRcatSDK', 'MIRcatSDK_GetSerialNumber', blanks(100), 100);
+            checkMIRcatReturnError(ret);
         end
         
         function numQCLs = get.numQCLs(obj)
@@ -305,12 +305,17 @@ classdef MIRcat_QCL < handle
             systemErrorWord = systemErrorWordPtr.value;
         end
         
-        function units = get.units(obj)
+        function unitsIndex = get.unitsIndex(obj)
             units = uint8(0);
             unitsPtr = libpointer('uint8Ptr', units);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetWWDisplayUnits', unitsPtr);
             checkMIRcatReturnError(ret);
-            units = unitsPtr.value;
+            unitsIndex = unitsPtr.value;
+        end
+        
+        function unitsString = get.unitsString(obj)
+            unitsArray = {'um', 'cm-1'};
+            unitsString = unitsArray{obj.unitsIndex};
         end
         
         function activeQCL = get.activeQCL(obj)

@@ -12,7 +12,8 @@ classdef QCL_Unit < handle
         pulseWidth;
         current;
         actualTemp;
-        mode;
+        modeIndex;
+        modeString;
         setTemp;
         tempRange;
         active;
@@ -24,6 +25,13 @@ classdef QCL_Unit < handle
         function obj = QCL_Unit(QCLNum, QCLconsts)
             obj.QCLNum = QCLNum;
             obj.QCLconsts = QCLconsts;
+        end
+    end
+    
+    methods
+        function setQCLParams(obj, pulseRate, pulseWidth, current)
+            ret = calllib('MIRcatSDK', 'MIRcatSDK_SetQCLParams', obj.QCLNum, pulseRate, pulseWidth, current);
+            checkMIRcatReturnError(ret);
         end
     end
     
@@ -72,9 +80,9 @@ classdef QCL_Unit < handle
             actualTemp = QclTempPtr.value;
         end
         
-        function mode = get.mode(obj)
-            mode = uint8(0);
-            modePtr = libpointer('uint8Ptr', mode);
+        function modeIndex = get.modeIndex(obj)
+            modeIndex = uint8(0);
+            modePtr = libpointer('uint8Ptr', modeIndex);
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQCLOperatingMode', obj.QCLNum, modePtr);
             checkMIRcatReturnError(ret);
 %             #define MIRcatSDK_MODE_ERROR                                ((uint8_t)0)
@@ -86,7 +94,30 @@ classdef QCL_Unit < handle
 %             #define MIRcatSDK_MODE_CW_FLTR1                             ((uint8_t)8)
 %             #define MIRcatSDK_MODE_CW_FLTR2                             ((uint8_t)9)
 %             #define MIRcatSDK_MODE_CW_FLTR1_MOD                         ((uint8_t)10)
-            mode = modePtr.value;
+            modeIndex = modePtr.value;
+        end
+        
+        function modeString = get.modeString(obj)            
+            switch obj.modeIndex
+                case 1
+                    modeString = 'PULSED';
+                case 2
+                    modeString = 'CW'; 
+                case 3
+                    modeString = 'CW MOD';
+                case 6 
+                    modeString = 'CW MR';
+                case 7
+                    modeString = 'CW MR MOD';
+                case 8 
+                    modeString = 'CW FLTR1'; 
+                case 9
+                    modeString = 'CW FLTR2'; 
+                case 10
+                    modeString = 'CW FLTR1 MOD';
+                otherwise
+                    modeString = 'ERROR';
+            end
         end
         
         function setTemp = get.setTemp(obj)

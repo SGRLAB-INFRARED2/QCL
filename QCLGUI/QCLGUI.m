@@ -57,8 +57,8 @@ global QCLLaser timerObject tuningUnits prefQCL numQCLs;
 guiLaserParamLabels = {'Active QCL:'; 'Mode:'; 'Pulse Rate (Hz):'; 'Pulse Width (ns):';...
     'Current (mA):'; 'Wavenumber (cm^{-1}):'; 'Wavelength (\mum):'};
 
-guiLaserParams = {'activeQCL'; 'mode'; 'pulseRate'; 'pulseWidth';...
-    'currentQCL'; 'wavenumber'; 'wavelength'};
+guiLaserParams = {'activeQCL'; 'modeString'; 'pulseRate'; 'pulseWidth';...
+    'current'; 'wavenumber'; 'wavelength'};
 
 tuningUnits = 'cm-1';
 
@@ -74,7 +74,7 @@ end
 numQCLs = QCLLaser.numQCLs;
 
 set(handles.QCLInfoTable,'Data',cell(3, numQCLs));
-% set(handles.QCLTuningRangeTable, 'Data', cell(numQCLs, 1));
+set(handles.wavelengthTextEdit, 'String', QCLLaser.tuneWavelength);
 
 rowNames = cell(1, numQCLs);
 
@@ -116,19 +116,20 @@ for ii = 1:length(guiLaserParamLabels)
         'Interpreter','tex');
     
     handles.([guiLaserParams{ii} 'Value']) = uicontrol(handles.laserParamsPanel, 'Style', 'edit',...
-        'FontSize', 10, 'Units', handles.laserParamsPanel.Units,...
-        'Position', [28 (panelHeight-(ii)*2)-0.1 10 1.5], 'Enable', 'inactive',...
+        'String', 'N/A', 'FontSize', 10, 'Units', handles.laserParamsPanel.Units,...
+        'Position', [29.5 (panelHeight-(ii)*2)-0.1 12 1.5], 'Enable', 'inactive',...
         'ForegroundColor', 'black');
 end
 
 set(handles.QCLInfoTable, 'ColumnName', {'<html>Temp (&#8451;)</html>'; 'Active'; '<html>TEC I (mA)</html>'});
 set(handles.QCLInfoTable, 'RowName', rowNames);
-% set(handles.QCLLabel1, 'FontSize', 14, 'ForegroundColor', [10, 96, 7]./255);
-% set(handles.QCLRangeTB1, 'Value', 1);
 
 set(handles.pumUnits, 'String', {'<html>cm<sup>-1</sup></html>'; '<html>&mu;m</html>'});
 
 updateQCLInfo(handles);
+if QCLLaser.isArmed
+    set(handles.pbArmDisarmQCL, 'String', 'Disarm Laser', 'BackgroundColor', 'green');
+end
 
 timerObject = timer('TimerFcn',{@updateQCLInfoTimer, handles},'ExecutionMode','fixedRate',...
                     'Period',0.5);
@@ -230,17 +231,17 @@ if strcmp(newUnits, 'um')
     set(handles.wavelengthTextEdit, 'String', sprintf('%0.2f', newWavelength));
     for ii = 1:numQCLs
         tuningRange = QCLLaser.QCLs{ii}.tuningRange_um;
-        set(handles.(['QCLRangeTB' num2str(ii)]), 'String', ...
+        set(handles.(['pbQCLRange' num2str(ii)]), 'String', ...
             ['<html>', sprintf('%0.2f to %0.2f', tuningRange(1),tuningRange(2)),...
-            ' &mu;m</sup></html>']);
+            ' &mu;m</html>']);
     end
 else
     set(handles.wavelengthTextEdit, 'String', sprintf('%0.1f', newWavelength));
     for ii = 1:numQCLs
         tuningRange = QCLLaser.QCLs{ii}.tuningRange_cm1;
-        set(handles.(['QCLRangeTB' num2str(ii)]), 'String', ...
+        set(handles.(['pbQCLRange' num2str(ii)]), 'String', ...
             ['<html>', sprintf('%0.1f to %0.1f', tuningRange(1),tuningRange(2)),...
-            ' &mu;m</sup></html>']);
+            ' cm<sup>-1</sup></html>']);
     end
 end
 tuningUnits = newUnits;
@@ -335,14 +336,14 @@ if ~QCLLaser.isArmed
         pause(1.0);
     end
     set(handles.pbArmDisarmQCL, 'String', 'Disarm Laser', 'BackgroundColor', 'green');
-    while ~QCLLaser.areTECsAtTemp
-        pause(1);
-    end
-    
-    if QCLLaser.areTECsAtTemp
-        set(handles.tempStatusText, 'BackgroundColor', 'green');
-        set(handles.pbTuneQCL, 'Enable', 'on');
-    end
+%     while ~QCLLaser.areTECsAtTemp
+%         pause(1);
+%     end
+%     
+%     if QCLLaser.areTECsAtTemp
+%         set(handles.tempStatusText, 'BackgroundColor', 'green');
+%         set(handles.pbTuneQCL, 'Enable', 'on');
+%     end
 else
     if QCLLaser.isEmitting
         QCLLaser.turnEmissionOff;
@@ -362,6 +363,7 @@ function disableArmDisarmButton(handles)
 set(handles.pbArmDisarmQCL, 'String', 'Arm Laser', 'BackgroundColor', [0.94 0.94 0.94]);
 set(handles.pbEmissionOnOff, 'Enable', 'off');
 set(handles.pbTuneQCL, 'Enable', 'off', 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
+
 
 function updateQCLInfoTable(handles)
 global QCLLaser
@@ -445,14 +447,40 @@ end
     
 
 updateQCLInfoTable(handles);
+updateQCLParams(handles);
 
-% fprintf('Timer is Working.\n')
-% 
-% % Choose default command line output for QCLGUI
-% handles.output = hObject;
-% 
-% % Update handles structure
-% guidata(hObject, handles);
+
+
+
+function updateQCLParams(handles)
+global QCLLaser
+
+activeQCL = QCLLaser.activeQCL;
+
+guiLaserParams = {'activeQCL'; 'modeString'; 'pulseRate'; 'pulseWidth';...
+    'current'; 'wavenumber'; 'wavelength'};
+
+if activeQCL == 0
+    for ii = 1:length(guiLaserParams)
+        set(handles.([guiLaserParams{ii} 'Value']), 'String', 'N/A');
+    end
+else
+    set(handles.activeQCLValue, 'String', num2str(activeQCL));
+    for ii = 2:length(guiLaserParams)-2
+        set(handles.([guiLaserParams{ii} 'Value']), 'String',...
+            num2str(QCLLaser.QCLs{activeQCL}.(guiLaserParams{ii})));
+    end
+    wavelength = QCLLaser.actualWavelength;
+    
+    set(handles.wavenumberValue, 'String', sprintf('%0.1f', convertWavelength(wavelength, 'um', 'cm-1')));
+    set(handles.wavelengthValue, 'String', sprintf('%0.2f', wavelength));
+end
+    
+    
+
+
+
+
 
 function updateQCLInfoTimer(timer, hEvent, handles)
 % fprintf('Timer is working\n');
