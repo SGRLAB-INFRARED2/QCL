@@ -22,7 +22,7 @@ function varargout = QCLGUI(varargin)
 
 % Edit the above text to modify the response to help QCLGUI
 
-% Last Modified by GUIDE v2.5 19-Mar-2019 16:26:06
+% Last Modified by GUIDE v2.5 22-Mar-2019 16:30:21
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -52,7 +52,7 @@ function QCLGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to QCLGUI (see VARARGIN)
 
-global QCLLaser timerObject tuningUnits prefQCL numQCLs;
+global QCLLaser timerObject prefQCL numQCLs displayUnits isManualTuneEnabled;
 
 guiLaserParamLabels = {'Active QCL:'; 'Mode:'; 'Pulse Rate (Hz):'; 'Pulse Width (ns):';...
     'Current (mA):'; 'Wavenumber (cm^{-1}):'; 'Wavelength (\mum):'};
@@ -60,9 +60,8 @@ guiLaserParamLabels = {'Active QCL:'; 'Mode:'; 'Pulse Rate (Hz):'; 'Pulse Width 
 guiLaserParams = {'activeQCL'; 'modeString'; 'pulseRate'; 'pulseWidth';...
     'current'; 'wavenumber'; 'wavelength'};
 
-tuningUnits = 'cm-1';
-
 prefQCL = -1;
+isManualTuneEnabled = false;
 
 QCLLaser = [];
 try
@@ -71,12 +70,20 @@ catch
     error('SGRLAB:SimulationMode','QCL not Initialized');
 end
 
+displayUnits = QCLLaser.unitsString;
+
 numQCLs = QCLLaser.numQCLs;
 
 set(handles.QCLInfoTable,'Data',cell(3, numQCLs));
-set(handles.wavelengthTextEdit, 'String', QCLLaser.tuneWavelength);
+if strcmp(displayUnits, 'cm-1')
+    set(handles.wavelengthTextEdit, 'String', sprintf('%0.1f', QCLLaser.tuneWavelength));
+else
+    set(handles.wavelengthTextEdit, 'String', sprintf('%0.2f', QCLLaser.tuneWavelength));
+end
 
 rowNames = cell(1, numQCLs);
+
+set(handles.pumUnits, 'Value', QCLLaser.unitsIndex);
 
 tuningRangePanelWidth = handles.tuningRangePanel.Position(3);
 textboxWidth = tuningRangePanelWidth./numQCLs;
@@ -85,10 +92,17 @@ textboxHeight = tuningRangePanelHeight./2;
 jj = numQCLs;
 for ii = 1:numQCLs
     rowNames{ii} = sprintf('QCL %i', ii);
-    tuningRange = QCLLaser.QCLs{jj}.tuningRange_cm1;
-    handles.(['pbQCLRange' num2str(jj)]) = uicontrol('Style','toggle','String',...
-        ['<html>', sprintf('%0.1f to %0.1f', tuningRange(1),tuningRange(2)),...
-        ' cm<sup>-1</sup></html>'],'FontWeight', 'bold', 'Tag', num2str(jj),...
+    if strcmp(displayUnits, 'cm-1')
+        tuningRange = QCLLaser.QCLs{jj}.tuningRange_cm1;
+        rangeString = ['<html>', sprintf('%0.1f to %0.1f', tuningRange(1),tuningRange(2)),...
+        ' cm<sup>-1</sup></html>'];
+    else
+        tuningRange = QCLLaser.QCLs{jj}.tuningRange_um;
+        rangeString = ['<html>', sprintf('%0.2f to %0.2f', tuningRange(1),tuningRange(2)), ' &mu;m</html>'];
+    end
+    
+    handles.(['pbQCLRange' num2str(jj)]) = uicontrol('Style','toggle','String', rangeString, ...
+        'FontWeight', 'bold', 'Tag', num2str(jj),...
         'Units', handles.tuningRangePanel.Units, 'FontSize', 10,...
         'parent', handles.tuningRangePanel,...
         'Position', [(jj-1)*textboxWidth 0 textboxWidth textboxHeight],...
@@ -129,10 +143,29 @@ set(handles.pumUnits, 'String', {'<html>cm<sup>-1</sup></html>'; '<html>&mu;m</h
 updateQCLInfo(handles);
 if QCLLaser.isArmed
     set(handles.pbArmDisarmQCL, 'String', 'Disarm Laser', 'BackgroundColor', 'green');
+    if QCLLaser.areTECsatTemp
+        set(handles.pbTuneQCL, 'Enable', 'on');
+    end
 end
 
+[tunedIm, ~, tunedImAlpha] = imread('img\tuned16.png');
+image(tunedIm, 'AlphaData', tunedImAlpha, 'Parent', handles.tunedAxes1);
+set(handles.tunedAxes1, 'Box', 'off', 'XColor', 'none', 'YColor', 'none', 'Color', 'none');
+
+handles.tunedText = uibutton(handles.tunedPanel1, 'Style', 'text',...
+    'String', '', 'FontSize', 12,...
+    'Position', [25  14   38.2000    1.0000], 'Units', 'characters',...
+    'ForegroundColor', 'black', 'HorizontalAlignment', 'left',...
+    'Interpreter','tex');
+
+[cancelIm, ~, cancelImAlpha] = imread('img\error16.png');
+image(cancelIm, 'AlphaData', cancelImAlpha, 'Parent', handles.cancelManualTuneAxes, 'HitTest', 'on', ...
+    'ButtonDownFcn', @(hObject,eventdata)QCLGUI('cancelManualTuneText_ButtonDownFcn',hObject,eventdata,guidata(hObject)));
+set(handles.cancelManualTuneAxes, 'Box', 'off', 'XColor', 'none', 'YColor', 'none', 'Color', 'none');
+
+
 timerObject = timer('TimerFcn',{@updateQCLInfoTimer, handles},'ExecutionMode','fixedRate',...
-                    'Period',0.5);
+                    'Period',1);
 start(timerObject);
 
 movegui('center');
@@ -193,6 +226,13 @@ function wavelengthTextEdit_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of wavelengthTextEdit as text
 %        str2double(get(hObject,'String')) returns contents of wavelengthTextEdit as a double
+if strcmp(get(handles.pbTuneQCL, 'Enable'), 'on')
+    uicontrol(handles.pbTuneQCL);
+    pbTuneQCL_Callback(handles.pbTuneQCL,[],handles);
+end
+
+
+    
 
 
 % --- Executes during object creation, after setting all properties.
@@ -216,19 +256,22 @@ function pumUnits_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns pumUnits contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from pumUnits
-global tuningUnits numQCLs QCLLaser
+global  numQCLs QCLLaser displayUnits
 
 unitsArray = {'cm-1', 'um'};
 
 wavelength = str2double(get(handles.wavelengthTextEdit, 'String'));
 unitsInd = get(handles.pumUnits, 'Value');
 newUnits = unitsArray{unitsInd};
-oldUnits = tuningUnits;
-
+oldUnits = displayUnits;
 
 newWavelength = convertWavelength(wavelength, oldUnits, newUnits);
 if strcmp(newUnits, 'um')
     set(handles.wavelengthTextEdit, 'String', sprintf('%0.2f', newWavelength));
+    set(handles.tunedText.Parent.Children, 'String', ...
+        ['Tuned to ', sprintf('%0.2f',QCLLaser.actualWavelength), ' \mum'],...
+        'FontWeight', 'bold');
+    set(handles.tunedText.Parent, 'Position', [25 13 37 0]);
     for ii = 1:numQCLs
         tuningRange = QCLLaser.QCLs{ii}.tuningRange_um;
         set(handles.(['pbQCLRange' num2str(ii)]), 'String', ...
@@ -237,6 +280,9 @@ if strcmp(newUnits, 'um')
     end
 else
     set(handles.wavelengthTextEdit, 'String', sprintf('%0.1f', newWavelength));
+    set(handles.tunedText.Parent.Children, 'String', ...
+        sprintf('Tuned to %0.1f cm^{-1}', 10000/QCLLaser.actualWavelength), 'FontWeight', 'bold');
+    set(handles.tunedText.Parent, 'Position', [25 15 37 0]);
     for ii = 1:numQCLs
         tuningRange = QCLLaser.QCLs{ii}.tuningRange_cm1;
         set(handles.(['pbQCLRange' num2str(ii)]), 'String', ...
@@ -244,10 +290,7 @@ else
             ' cm<sup>-1</sup></html>']);
     end
 end
-tuningUnits = newUnits;
-
- 
-
+displayUnits = newUnits;
 
 
 
@@ -269,11 +312,14 @@ function pbTuneQCL_Callback(hObject, eventdata, handles)
 % hObject    handle to pbTuneQCL (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global QCLLaser prefQCL tuningUnits
+global QCLLaser prefQCL isManualTuneEnabled
 
-set(hObject, 'String', 'Tuning', 'BackgroundColor', 'yellow');
+set(hObject, 'String', 'Tuning', 'BackgroundColor', 'Yellow');
+unitsArray = {'cm-1', 'um'};
 
 wavelength = str2double(get(handles.wavelengthTextEdit, 'String'));
+unitsInd = get(handles.pumUnits, 'Value');
+tuningUnits = unitsArray{unitsInd};
 
 if prefQCL ~= -1
     if strcmp(tuningUnits, 'um')
@@ -288,10 +334,7 @@ if prefQCL ~= -1
         QCLNum = QCLLaser.whichQCL(wavelength, tuningUnits);
         if QCLNum == -1
             set(hObject, 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
-            set(handles.errorMessage1, 'String', 'ERROR: WAVELENGTH OUT OF RANGE');
-            error(sprintf(['\n*******************************************\n',...
-                '*     ERROR: WAVELENGTH OUT OF RANGE      *',...
-                '\n*******************************************\n']));
+            checkMIRcatReturnError(80);
         else
             QCLLaser.tuneTo(wavelength, tuningUnits, QCLNum);
         end
@@ -300,10 +343,7 @@ else
     QCLNum = QCLLaser.whichQCL(wavelength, tuningUnits);
     if QCLNum == -1
         set(hObject, 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
-        set(handles.errorMessage1, 'String', 'ERROR: WAVELENGTH OUT OF RANGE');
-        error(sprintf(['\n*******************************************\n',...
-            '*     ERROR: WAVELENGTH OUT OF RANGE      *',...
-            '\n*******************************************\n']));
+        checkMIRcatReturnError(80);
     else
         QCLLaser.tuneTo(wavelength, tuningUnits, QCLNum);
     end
@@ -312,12 +352,28 @@ end
 while ~QCLLaser.isTuned
     pause(0.5);
 end
+isManualTuneEnabled = true;
 
-if QCLLaser.isTuned
-    set(handles.pbTuneQCL, 'String', 'Tuned', 'BackgroundColor', 'green');
-    set(handles.errorMessage1, 'String', '');
-    set(handles.pbEmissionOnOff, 'Enable', 'on');
+set(handles.tunedPanel1, 'Visible', 'on');
+set(handles.cancelManualTunePanel, 'Visible', 'on');
+
+
+if strcmp(tuningUnits, 'cm-1')
+    set(handles.tunedText.Parent.Children, 'String', ...
+        sprintf('Tuned to %0.1f cm^{-1}', 10000/QCLLaser.actualWavelength), 'FontWeight', 'bold');
+    set(handles.tunedText.Parent, 'Position', [25 15 37 0]);
+    set(handles.wavelengthTextEdit, 'String', sprintf('%0.1f', 10000/QCLLaser.actualWavelength));
+else
+    set(handles.tunedText.Parent.Children, 'String', ...
+        ['Tuned to ', sprintf('%0.2f',QCLLaser.actualWavelength), ' \mum'],...
+        'FontWeight', 'bold');
+    set(handles.tunedText.Parent, 'Position', [25 13 37 0]);
+    set(handles.wavelengthTextEdit, 'String', sprintf('%0.2f', QCLLaser.actualWavelength));
 end
+set(handles.pbTuneQCL, 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
+set(handles.pbEmissionOnOff, 'Enable', 'on');
+QCLLaser.unitsIndex = unitsInd;
+
 
 
 
@@ -327,7 +383,7 @@ function pbArmDisarmQCL_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global QCLLaser
+global QCLLaser isManualTuneEnabled
 
 if ~QCLLaser.isArmed
     set(handles.pbArmDisarmQCL, 'String', 'Arming Laser', 'BackgroundColor', 'yellow')
@@ -336,23 +392,30 @@ if ~QCLLaser.isArmed
         pause(1.0);
     end
     set(handles.pbArmDisarmQCL, 'String', 'Disarm Laser', 'BackgroundColor', 'green');
-%     while ~QCLLaser.areTECsAtTemp
-%         pause(1);
-%     end
-%     
-%     if QCLLaser.areTECsAtTemp
-%         set(handles.tempStatusText, 'BackgroundColor', 'green');
-%         set(handles.pbTuneQCL, 'Enable', 'on');
-%     end
+    %     while ~QCLLaser.areTECsAtTemp
+    %         pause(1);
+    %     end
+    %
+    %     if QCLLaser.areTECsAtTemp
+    %         set(handles.tempStatusText, 'BackgroundColor', 'green');
+    %         set(handles.pbTuneQCL, 'Enable', 'on');
+    %     end
 else
     if QCLLaser.isEmitting
         QCLLaser.turnEmissionOff;
         set(handles.pbEmissionOnOff, 'String', 'Turn Emission On', 'BackgroundColor', [0.94 0.94 0.94]);
     end
+    if isManualTuneEnabled
+        QCLLaser.disableManualTune;
+        isManualTuneEnabled = 0;
+    end
     QCLLaser.disarmLaser;
+    set(handles.tunedPanel1, 'Visible', 'off');
+    set(handles.cancelManualTunePanel, 'Visible', 'off');
     set(handles.pbArmDisarmQCL, 'String', 'Arm Laser', 'BackgroundColor', [0.94 0.94 0.94]);
     set(handles.pbEmissionOnOff, 'Enable', 'off');
     set(handles.pbTuneQCL, 'Enable', 'off', 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
+    
 end
 
 function QCLInfoTable_CreateFcn(hObject, eventdata, handles)
@@ -360,6 +423,7 @@ function QCLInfoTable_CreateFcn(hObject, eventdata, handles)
 
 
 function disableArmDisarmButton(handles)
+set(handles.tunedPanel1, 'Visble', 'off');
 set(handles.pbArmDisarmQCL, 'String', 'Arm Laser', 'BackgroundColor', [0.94 0.94 0.94]);
 set(handles.pbEmissionOnOff, 'Enable', 'off');
 set(handles.pbTuneQCL, 'Enable', 'off', 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
@@ -429,12 +493,24 @@ else
     disableArmDisarmButton(handles);
 end
 
+% if QCLLaser.isArmed
+%     set(handles.pbArmDisarmQCL, 'String', 'Disarm Laser', 'BackgroundColor', 'green');
+% else
+%     set(handles.pbArmDisarmQCL, 'String', 'Arm Laser', 'BackgroundColor', [0.94 0.94 0.94]);
+% end
+
 if QCLLaser.areTECsAtTemp
     set(handles.tempStatusText, 'BackgroundColor', 'green');
     set(handles.pbTuneQCL, 'Enable', 'on');
 else
     set(handles.tempStatusText, 'BackgroundColor', 'red');
     set(handles.pbTuneQCL, 'Enable', 'off');
+end
+
+if QCLLaser.isEmitting
+    set(handles.emissionStatusText, 'BackgroundColor', 'green');
+else
+    set(handles.emissionStatusText, 'BackgroundColor', 'red');
 end
 
 for ii = 1:numQCLs
@@ -444,7 +520,7 @@ for ii = 1:numQCLs
         set(handles.(['pbQCLRange' num2str(ii)]), 'BackgroundColor', 'white');
     end
 end
-    
+   
 
 updateQCLInfoTable(handles);
 updateQCLParams(handles);
@@ -515,28 +591,6 @@ delete(QCLLaser);
 % Hint: delete(hObject) closes the figure
 delete(hObject);
 
-% --- If Enable == 'on', executes on mouse press in 5 pixel border.
-% --- Otherwise, executes on mouse press in 5 pixel border or over wavelengthTextEdit.
-function wavelengthTextEdit_ButtonDownFcn(hObject, eventdata, handles)
-% hObject    handle to wavelengthTextEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on key press with focus on wavelengthTextEdit and none of its controls.
-function wavelengthTextEdit_KeyPressFcn(hObject, eventdata, handles)
-% hObject    handle to wavelengthTextEdit (see GCBO)
-% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.UICONTROL)
-%	Key: name of the key that was pressed, in lower case
-%	Character: character interpretation of the key(s) that was pressed
-%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
-% handles    structure with handles and user data (see GUIDATA)
-set(handles.pbTuneQCL, 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
-
-if strcmp(eventdata.Key, 'return') && strcmp(handles.pbTuneQCL.Enable, 'on')
-    uicontrol(handles.pbTuneQCL);
-    pbTuneQCL_Callback(handles.pbTuneQCL,[],handles);
-end
 
 function newWavelength = convertWavelength(currentWavelength, currentUnits, newUnits)
     % wavelength - wavelength you want to convert
@@ -567,7 +621,6 @@ end
 
 % --- Executes when button is pressed to select QCL.
 function pbWhichQCL_Callback(hObject, eventdata, handles)
-% global NumQCLs
 
 global prefQCL numQCLs
 for ii = 1:numQCLs
@@ -590,4 +643,42 @@ else
                 'ForegroundColor', 'black');
         end
     end
+end
+
+
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over cancelManualTuneText.
+function cancelManualTuneText_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to cancelManualTuneText (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global QCLLaser isManualTuneEnabled
+
+QCLLaser.cancelManualTune;
+isManualTuneEnabled = false;
+set(handles.tunedPanel1, 'Visible', 'off');
+set(handles.cancelManualTunePanel, 'Visible', 'off');
+set(handles.pbEmissionOnOff, 'String', 'Turn Emission On', 'BackgroundColor', [0.94 0.94 0.94], 'Enable', 'off');
+
+
+% --- Executes on mouse motion over figure - except title and menu.
+function QCLController_WindowButtonMotionFcn(hObject, eventdata, handles)
+% hObject    handle to QCLController (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+posCancelManTune = get(handles.cancelManualTunePanel, 'Position');
+
+
+pMouse = get(hObject,'CurrentPoint');
+% Check if the mouse is currently over the UIPANEL
+if  (pMouse(1) > posCancelManTune(1)) && (pMouse(1) < posCancelManTune(1) + posCancelManTune(3)) ...
+        && (pMouse(2) > posCancelManTune(2)) && (pMouse(2) < posCancelManTune(2) + posCancelManTune(4)) ...
+        && strcmp(get(handles.cancelManualTunePanel, 'Visible'), 'on')
+    % If so change the pointer
+    set(hObject,'Pointer','hand')
+    set(handles.cancelManualTuneText, 'ForegroundColor', 'blue');
+else
+    % Otherwise set/keep the default arrow pointer
+    set(hObject,'Pointer','arrow')
+    set(handles.cancelManualTuneText, 'ForegroundColor', 'black');
 end

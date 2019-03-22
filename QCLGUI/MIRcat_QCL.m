@@ -2,11 +2,17 @@ classdef MIRcat_QCL < handle
     
     properties (SetAccess = private, Hidden = true)
         libname = 'MIRcatSDK';
+        unitsArray = {'cm-1', 'um'};
     end
     
     properties (SetAccess = private)
         QCLs = {};
         QCLconsts;
+        Tag = 'MIRcat_QCL';
+    end
+    
+    properties
+        unitsIndex;
     end
     
     properties (Dependent)
@@ -22,7 +28,6 @@ classdef MIRcat_QCL < handle
         isSystemError;
         areTECsAtTemp;
         systemErrorWord;
-        unitsIndex;
         unitsString;
         activeQCL;
         actualWavelength;
@@ -63,6 +68,8 @@ classdef MIRcat_QCL < handle
                 for ii = 1:obj.numQCLs
                     obj.QCLs{ii} = QCL_Unit(ii, obj.QCLconsts);
                 end
+                
+                obj.ReadDefaults;
                 
             catch
                 warning('Error Initializing QCL.  Entering simulation mode.');
@@ -305,17 +312,16 @@ classdef MIRcat_QCL < handle
             systemErrorWord = systemErrorWordPtr.value;
         end
         
-        function unitsIndex = get.unitsIndex(obj)
-            units = uint8(0);
-            unitsPtr = libpointer('uint8Ptr', units);
-            ret = calllib('MIRcatSDK', 'MIRcatSDK_GetWWDisplayUnits', unitsPtr);
-            checkMIRcatReturnError(ret);
-            unitsIndex = unitsPtr.value;
-        end
+%         function unitsIndex = get.unitsIndex(obj)
+%             units = uint8(0);
+%             unitsPtr = libpointer('uint8Ptr', units);
+%             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetWWDisplayUnits', unitsPtr);
+%             checkMIRcatReturnError(ret);
+%             unitsIndex = unitsPtr.value;
+%         end
         
         function unitsString = get.unitsString(obj)
-            unitsArray = {'um', 'cm-1'};
-            unitsString = unitsArray{obj.unitsIndex};
+            unitsString = obj.unitsArray{obj.unitsIndex};
         end
         
         function activeQCL = get.activeQCL(obj)
@@ -349,8 +355,8 @@ classdef MIRcat_QCL < handle
             
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetTuneWW', tuneWavelengthPtr, unitsPtr, prefQCLPtr);
             checkMIRcatReturnError(ret);
-            
             tuneWavelength = tuneWavelengthPtr.value;
+            
         end
         
         function isTuned = get.isTuned(obj)
@@ -373,9 +379,23 @@ classdef MIRcat_QCL < handle
                 obj.disconnect; % Disconnect QCL
             end
             
+            obj.SaveDefaults;
+            
             if libisloaded(obj.libname) % If library is loaded, unload the library
                 unloadlibrary(obj.libname);
             end
+        end
+        
+        function ReadDefaults(obj)
+            name = 'unitsIndex';
+            d = Defaults(obj);
+            d.LoadDefaults(name);
+        end
+        
+        function SaveDefaults(obj)
+            name = 'unitsIndex';
+            d = Defaults(obj);
+            d.SaveDefaults(name);
         end
     end
 end
