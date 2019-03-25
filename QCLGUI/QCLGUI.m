@@ -134,6 +134,10 @@ for ii = 1:length(guiLaserParamLabels)
         'Position', [29.5 (panelHeight-(ii)*2)-0.1 12 1.5], 'Enable', 'inactive',...
         'ForegroundColor', 'black');
 end
+handles.pbChangeLaserParams = uicontrol(handles.laserParamsPanel, 'Style', 'pushbutton',...
+    'String', 'Change Parameters', 'FontSize', 10, 'Units', handles.laserParamsPanel.Units,...
+    'Position', [0 (panelHeight - 2*(length(guiLaserParams)+1)-0.2) 41.5 1.75],...
+    'Callback', @(hObject,eventdata)QCLGUI('pbChangeLaserParams_Callback',hObject,eventdata,guidata(hObject)));
 
 set(handles.QCLInfoTable, 'ColumnName', {'<html>Temp (&#8451;)</html>'; 'Active'; '<html>TEC I (mA)</html>'});
 set(handles.QCLInfoTable, 'RowName', rowNames);
@@ -269,7 +273,7 @@ newWavelength = convertWavelength(wavelength, oldUnits, newUnits);
 if strcmp(newUnits, 'um')
     set(handles.wavelengthTextEdit, 'String', sprintf('%0.2f', newWavelength));
     set(handles.tunedText.Parent.Children, 'String', ...
-        ['Tuned to ', sprintf('%0.2f',QCLLaser.actualWavelength), ' \mum'],...
+        ['Tuned To ', sprintf('%0.2f',QCLLaser.actualWavelength), ' \mum'],...
         'FontWeight', 'bold');
     set(handles.tunedText.Parent, 'Position', [25 13 37 0]);
     for ii = 1:numQCLs
@@ -281,7 +285,7 @@ if strcmp(newUnits, 'um')
 else
     set(handles.wavelengthTextEdit, 'String', sprintf('%0.1f', newWavelength));
     set(handles.tunedText.Parent.Children, 'String', ...
-        sprintf('Tuned to %0.1f cm^{-1}', 10000/QCLLaser.actualWavelength), 'FontWeight', 'bold');
+        sprintf('Tuned To %0.1f cm^{-1}', 10000/QCLLaser.actualWavelength), 'FontWeight', 'bold');
     set(handles.tunedText.Parent, 'Position', [25 15 37 0]);
     for ii = 1:numQCLs
         tuningRange = QCLLaser.QCLs{ii}.tuningRange_cm1;
@@ -291,6 +295,11 @@ else
     end
 end
 displayUnits = newUnits;
+
+function pbChangeLaserParams_Callback(hObject, eventdata, handles)
+global QCLLaser
+
+laserParamGUI(QCLLaser.numQCLs);
 
 
 
@@ -360,12 +369,12 @@ set(handles.cancelManualTunePanel, 'Visible', 'on');
 
 if strcmp(tuningUnits, 'cm-1')
     set(handles.tunedText.Parent.Children, 'String', ...
-        sprintf('Tuned to %0.1f cm^{-1}', 10000/QCLLaser.actualWavelength), 'FontWeight', 'bold');
+        sprintf('Tuned To %0.1f cm^{-1}', 10000/QCLLaser.actualWavelength), 'FontWeight', 'bold');
     set(handles.tunedText.Parent, 'Position', [25 15 37 0]);
     set(handles.wavelengthTextEdit, 'String', sprintf('%0.1f', 10000/QCLLaser.actualWavelength));
 else
     set(handles.tunedText.Parent.Children, 'String', ...
-        ['Tuned to ', sprintf('%0.2f',QCLLaser.actualWavelength), ' \mum'],...
+        ['Tuned To ', sprintf('%0.2f',QCLLaser.actualWavelength), ' \mum'],...
         'FontWeight', 'bold');
     set(handles.tunedText.Parent, 'Position', [25 13 37 0]);
     set(handles.wavelengthTextEdit, 'String', sprintf('%0.2f', QCLLaser.actualWavelength));
@@ -423,7 +432,7 @@ function QCLInfoTable_CreateFcn(hObject, eventdata, handles)
 
 
 function disableArmDisarmButton(handles)
-set(handles.tunedPanel1, 'Visble', 'off');
+set(handles.tunedPanel1, 'Visible', 'off');
 set(handles.pbArmDisarmQCL, 'String', 'Arm Laser', 'BackgroundColor', [0.94 0.94 0.94]);
 set(handles.pbEmissionOnOff, 'Enable', 'off');
 set(handles.pbTuneQCL, 'Enable', 'off', 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94]);
