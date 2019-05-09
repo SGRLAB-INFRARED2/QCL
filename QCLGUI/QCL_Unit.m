@@ -10,6 +10,7 @@ classdef QCL_Unit < handle
         tuningRange_cm1;
         pulseRate;
         pulseWidth;
+        dutyCycle;
         current;
         actualTemp;
         modeIndex;
@@ -63,6 +64,10 @@ classdef QCL_Unit < handle
             ret = calllib('MIRcatSDK', 'MIRcatSDK_GetQCLPulseWidth', obj.QCLNum, pulseWidthPtr);
             checkMIRcatReturnError(ret);
             pulseWidth = pulseWidthPtr.value;
+        end
+        
+        function dutyCycle = get.dutyCycle(obj)
+            dutyCycle = obj.pulseWidth*10^(-9) * obj.pulseRate * 100;
         end
         
         function currentInMilliAmps = get.current(obj)

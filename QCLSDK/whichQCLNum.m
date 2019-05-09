@@ -41,12 +41,12 @@ switch units
         
     case 'cm-1'
         rangesCM1 = zeros(numQCLs, 2);
-        for ii = 1:numQCLs
-            for jj = 1:2
-                rangesCM1(ii, jj) = convertWavelength(rangesMicrons(ii, jj), 'um', 'cm-1');
-            end
-        end
-%         rangesCM1 = 10000./rangesMicrons;
+%         for ii = 1:numQCLs
+%             for jj = 1:2
+%                 rangesCM1(ii, jj) = convertWavelength(rangesMicrons(ii, jj), 'um', 'cm-1');
+%             end
+%         end
+        rangesCM1 = 10000./rangesMicrons; % 1/um * 1E6 um / 1E2 cm
         for ii = 1:numQCLs
             if wavelength >= rangesCM1(ii, 2) && wavelength <= rangesCM1(ii, 1)
                 out = ii;

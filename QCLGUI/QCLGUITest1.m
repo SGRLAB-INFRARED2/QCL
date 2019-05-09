@@ -360,8 +360,8 @@ function QCLController_CloseRequestFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global QCLLaser timerObject;
 
-stop(timerObject);
-delete(timerObject);
+% stop(timerObject);
+% delete(timerObject);
 delete(QCLLaser);
 
 % Hint: delete(hObject) closes the figure

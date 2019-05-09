@@ -384,6 +384,8 @@ classdef MIRcat_QCL < handle
             if libisloaded(obj.libname) % If library is loaded, unload the library
                 unloadlibrary(obj.libname);
             end
+            
+            clear obj
         end
         
         function ReadDefaults(obj)

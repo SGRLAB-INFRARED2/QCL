@@ -52,7 +52,7 @@ function QCLGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to QCLGUI (see VARARGIN)
 
-global QCLLaser timerObject prefQCL numQCLs displayUnits isManualTuneEnabled;
+global QCLLaser prefQCL numQCLs displayUnits isManualTuneEnabled;
 
 guiLaserParamLabels = {'Active QCL:'; 'Mode:'; 'Pulse Rate (Hz):'; 'Pulse Width (ns):';...
     'Current (mA):'; 'Wavenumber (cm^{-1}):'; 'Wavelength (\mum):'};
@@ -147,7 +147,7 @@ set(handles.pumUnits, 'String', {'<html>cm<sup>-1</sup></html>'; '<html>&mu;m</h
 updateQCLInfo(handles);
 if QCLLaser.isArmed
     set(handles.pbArmDisarmQCL, 'String', 'Disarm Laser', 'BackgroundColor', 'green');
-    if QCLLaser.areTECsatTemp
+    if QCLLaser.areTECsAtTemp
         set(handles.pbTuneQCL, 'Enable', 'on');
     end
 end
@@ -169,10 +169,10 @@ set(handles.cancelManualTuneAxes, 'Box', 'off', 'XColor', 'none', 'YColor', 'non
 
 
 timerObject = timer('TimerFcn',{@updateQCLInfoTimer, handles},'ExecutionMode','fixedRate',...
-                    'Period',1);
+                    'Period',1, 'tag', 'updateQCLInfo');
 start(timerObject);
 
-movegui('center');
+% movegui('center');
 
 % Choose default command line output for QCLGUI
 handles.output = hObject;
@@ -299,7 +299,7 @@ displayUnits = newUnits;
 function pbChangeLaserParams_Callback(hObject, eventdata, handles)
 global QCLLaser
 
-laserParamGUI(QCLLaser.numQCLs);
+laserParamGUI;
 
 
 
@@ -398,6 +398,7 @@ if ~QCLLaser.isArmed
     set(handles.pbArmDisarmQCL, 'String', 'Arming Laser', 'BackgroundColor', 'yellow')
     QCLLaser.armLaser;
     while ~QCLLaser.isArmed
+        set(handles.pbArmDisarmQCL, 'String', 'Arming Laser', 'BackgroundColor', 'yellow')
         pause(1.0);
     end
     set(handles.pbArmDisarmQCL, 'String', 'Disarm Laser', 'BackgroundColor', 'green');
@@ -502,11 +503,13 @@ else
     disableArmDisarmButton(handles);
 end
 
-% if QCLLaser.isArmed
-%     set(handles.pbArmDisarmQCL, 'String', 'Disarm Laser', 'BackgroundColor', 'green');
-% else
-%     set(handles.pbArmDisarmQCL, 'String', 'Arm Laser', 'BackgroundColor', [0.94 0.94 0.94]);
-% end
+if QCLLaser.isArmed
+    set(handles.pbArmDisarmQCL, 'String', 'Disarm Laser', 'BackgroundColor', 'green');
+    set(handles.pbTuneQCL, 'Enable', 'on')
+else
+    set(handles.pbArmDisarmQCL, 'String', 'Arm Laser', 'BackgroundColor', [0.94 0.94 0.94]);
+    set(handles.pbTuneQCL, 'Enable', 'off')
+end
 
 if QCLLaser.areTECsAtTemp
     set(handles.tempStatusText, 'BackgroundColor', 'green');
@@ -516,10 +519,44 @@ else
     set(handles.pbTuneQCL, 'Enable', 'off');
 end
 
+unitsArray = {'cm-1', 'um'};
+unitsInd = get(handles.pumUnits, 'Value');
+tuningUnits = unitsArray{unitsInd};
+
+if QCLLaser.activeQCL ~= 0
+    set(handles.tunedPanel1, 'Visible', 'on');
+    set(handles.cancelManualTunePanel, 'Visible', 'on');
+    if strcmp(tuningUnits, 'cm-1')
+        set(handles.tunedText.Parent.Children, 'String', ...
+            sprintf('Tuned To %0.1f cm^{-1}', 10000/QCLLaser.actualWavelength), 'FontWeight', 'bold');
+        set(handles.tunedText.Parent, 'Position', [25 15 37 0]);
+        set(handles.wavelengthTextEdit, 'String', sprintf('%0.1f', 10000/QCLLaser.actualWavelength));
+    else
+        set(handles.tunedText.Parent.Children, 'String', ...
+            ['Tuned To ', sprintf('%0.2f',QCLLaser.actualWavelength), ' \mum'],...
+            'FontWeight', 'bold');
+        set(handles.tunedText.Parent, 'Position', [25 13 37 0]);
+        set(handles.wavelengthTextEdit, 'String', sprintf('%0.2f', QCLLaser.actualWavelength));
+    end
+else
+    set(handles.tunedPanel1, 'Visible', 'off');
+    set(handles.cancelManualTunePanel, 'Visible', 'off');
+end
+
+% if QCLLaser.isTuned
+%     set(handles.pbTuneQCL, 'String', 'Tuned', 'BackgroundColor', 'green')
+%     set(handles.pbEmissionOnOff, 'Enable', 'on');
+% else
+%     set(handles.pbTuneQCL, 'String', 'Tune', 'BackgroundColor', [0.94 0.94 0.94])
+%     set(handles.pbEmissionOnOff, 'Enable', 'off');
+% end
+
 if QCLLaser.isEmitting
     set(handles.emissionStatusText, 'BackgroundColor', 'green');
+    set(handles.pbEmissionOnOff, 'Enable', 'on', 'BackgroundColor', 'green', 'String', 'Turn Emission Off');
 else
     set(handles.emissionStatusText, 'BackgroundColor', 'red');
+    set(handles.pbEmissionOnOff, 'BackgroundColor', [0.94 0.94 0.94], 'String', 'Turn Emission On');
 end
 
 for ii = 1:numQCLs
@@ -572,18 +609,25 @@ function updateQCLInfoTimer(timer, hEvent, handles)
 updateQCLInfo(handles);
 
 
-
 % --- Executes during object deletion, before destroying properties.
 function QCLController_DeleteFcn(hObject, eventdata, handles)
 % hObject    handle to QCLController (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% global QCLLaser timerObject;
-% 
-% stop(timerObject);
-% delete(timerObject);
-% delete(QCLLaser);
+global QCLLaser
+
+timer = timerfind('tag', 'updateQCLInfo');
+timerStatus = get(timer, 'Running');
+if strcmp(timerStatus,'on')
+stop(timer)
+end
+delete(timerfind('tag', 'updateQCLInfo'));
+
+
+delete(QCLLaser);
+clear QCLLaser
+
 
 
 % --- Executes when user attempts to close QCLController.
@@ -591,11 +635,17 @@ function QCLController_CloseRequestFcn(hObject, eventdata, handles)
 % hObject    handle to QCLController (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global QCLLaser timerObject;
+global QCLLaser
 
-stop(timerObject);
-delete(timerObject);
+timer = timerfind('tag', 'updateQCLInfo');
+timerStatus = get(timer, 'Running');
+if strcmp(timerStatus,'on')
+stop(timer)
+end
+delete(timerfind('tag', 'updateQCLInfo'));
+
 delete(QCLLaser);
+clear QCLLaser;
 
 % Hint: delete(hObject) closes the figure
 delete(hObject);
