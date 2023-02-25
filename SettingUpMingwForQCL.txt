@@ -1,0 +1,5 @@
+1. https://sourceforge.net/projects/tdm-gcc/
+2. Download files and install them to "C:\TDM-GCC-64" folder
+3. In matlab call the setenv('MW_MINGW64_LOC', 'C:\TDM-GCC-64')
+4. In matlab enter the command: >> mex -setup
+5. Copy <stdint.h> found in this folder into <matlabroot>\extern\include\

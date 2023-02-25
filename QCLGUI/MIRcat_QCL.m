@@ -12,7 +12,7 @@ classdef MIRcat_QCL < handle
     end
     
     properties
-        unitsIndex;
+        unitsIndex = 1;
     end
     
     properties (Dependent)
@@ -71,7 +71,7 @@ classdef MIRcat_QCL < handle
                 
                 obj.ReadDefaults;
                 
-            catch
+            catch Err
                 warning('Error Initializing QCL.  Entering simulation mode.');
             end
             

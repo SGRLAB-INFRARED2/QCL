@@ -53,7 +53,7 @@ function laserParamGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % varargin   command line arguments to laserParamGUI (see VARARGIN)
 global QCLLaser
 % numQCLs = QCLLaser.numQCLs;
-numQCLs = 3;
+numQCLs = 2;
 
 set(hObject, 'Units', 'character');
 set(hObject, 'Position', [hObject.Position(1) hObject.Position(2) numQCLs*45 25])
